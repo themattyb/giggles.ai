@@ -199,12 +199,6 @@ This project is open source and available under the [License](LICENSE).
 - 🎨 [GUI README](gui/README.md) - GUI documentation
 - 🏗️ [Architecture](docs/ARCHITECTURE.md) - Technical architecture
 
-## 📞 Contact & Support
-
-- 🐛 **Issues**: [GitHub Issues](https://github.com/your-username/giggles.ai/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/your-username/giggles.ai/discussions)
-- 📧 **Email**: [Contact us](mailto:hello@giggles.ai)
-
 ## 🔒 Security
 
 - Credentials are managed via environment variables
