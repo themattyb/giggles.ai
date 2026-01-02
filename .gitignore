@@ -1,0 +1,32 @@
+# Environment files with credentials
+.env
+*.env
+.env.local
+.env.*.local
+
+# AWS credentials
+credentials.txt
+aws-credentials.txt
+.aws-credentials
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go build artifacts (if building at root)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Logs
+*.log
+

@@ -8,10 +8,11 @@ Giggles.ai aims to create a fun and interactive space where AI can be a delightf
 
 ## 🚀 What We're Building
 
+- **AI Meme Crawler**: A polite web crawler (written in Go) that scours the internet for funny AI memes
+- **Meme Search Interface**: A beautiful, responsive web GUI for searching and viewing collected memes
+- **S3 Storage**: Secure cloud storage for meme images with AWS S3 integration
 - **Community Hub**: A welcoming space for AI enthusiasts, learners, and experimenters
 - **Learning Platform**: Interactive experiences that make AI concepts accessible and fun
-- **Open Source Playground**: A collection of quirky, educational AI models and experiments
-- **Knowledge Sharing**: Documentation, tutorials, and resources for AI learning
 
 ## 🎪 What This Is NOT
 
@@ -28,38 +29,72 @@ Giggles.ai aims to create a fun and interactive space where AI can be a delightf
 
 ## 🏗️ Current Status
 
-**Early Development Phase** - We're just getting started! The project currently includes:
+**Active Development** - The project now includes:
 
-- Basic web interface structure
-- Community guidelines and mission statement
-- Open source foundation (see [LICENSE](LICENSE))
+- ✅ **Web Crawler** (Go): Polite crawler with robots.txt support, image detection, and S3 upload
+- ✅ **Web GUI**: Modern, responsive interface for searching and viewing memes
+- ✅ **Landing Page**: Beautiful entry point with feature highlights
+- ✅ **Security**: Secure credential management with environment variables
+- ✅ **Documentation**: Comprehensive setup guides and API documentation
+- ✅ **Open Source Foundation**: See [LICENSE](LICENSE)
 
 ## 🛠️ Getting Started
 
 ### Prerequisites
 
-- A modern web browser
-- Basic understanding of HTML/CSS (for contributors)
+- **Go 1.21 or later** - [Download Go](https://golang.org/dl/)
+- **AWS Account** (for S3 storage) - [Sign up for AWS](https://aws.amazon.com/)
+- **Modern web browser** (Chrome, Firefox, Safari, Edge)
 - Enthusiasm for AI and learning! 🎉
 
-### Local Setup
+### Quick Start
 
-1. Clone the repository:
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/your-username/giggles.ai.git
    cd giggles.ai
    ```
 
-2. Open `index.html` in your browser:
+2. **Set up AWS credentials:**
    ```bash
-   open index.html  # macOS
-   xdg-open index.html  # Linux
-   start index.html  # Windows
+   export AWS_ACCESS_KEY_ID=your_access_key
+   export AWS_SECRET_ACCESS_KEY=your_secret_key
+   export AWS_REGION=us-east-1
    ```
+
+3. **Build the crawler:**
+   ```bash
+   cd crawler
+   go mod download
+   go build -o crawler .
+   ```
+
+4. **Run the crawler:**
+   ```bash
+   ./crawler -start-url "https://www.reddit.com/r/artificial" \
+     -s3-bucket "your-bucket-name" \
+     -workers 5 \
+     -delay 2s \
+     -max-pages 100
+   ```
+
+5. **View the GUI:**
+   ```bash
+   # From project root
+   open gui/index.html  # macOS
+   xdg-open gui/index.html  # Linux
+   start gui/index.html  # Windows
+   ```
+
+### Detailed Setup
+
+For complete setup instructions, including S3 bucket creation and security best practices, see [SETUP.md](SETUP.md).
 
 ### Development
 
-Currently, this is a simple static website. No build process or dependencies required!
+- **Crawler**: Written in Go, uses standard library and AWS SDK
+- **GUI**: Pure HTML/CSS/JavaScript, no build process required
+- **Landing Page**: Static HTML with modern CSS
 
 ## 🤝 Contributing
 
@@ -70,9 +105,11 @@ We welcome contributions from developers, designers, AI researchers, educators, 
 - 🐛 Report bugs and suggest improvements
 - 💡 Propose new features or experiments
 - 📚 Improve documentation
-- 🎨 Enhance the user interface
+- 🎨 Enhance the user interface (GUI or landing page)
+- 🔧 Improve crawler functionality (better meme detection, performance)
 - 🧪 Share interesting AI experiments
 - 📖 Write tutorials or guides
+- 🔌 Build backend API integration
 
 ### Getting Started with Contributing
 
@@ -89,12 +126,29 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ```
 giggles.ai/
-├── index.html          # Main web page
-├── style.css           # Styling and visual design
-├── README.md           # Project documentation (this file)
-├── LICENSE             # Open source license
-├── CONTRIBUTING.md     # Contribution guidelines
-└── docs/               # Additional documentation
+├── crawler/                    # Go web crawler
+│   ├── main.go                # Crawler entry point
+│   ├── go.mod                 # Go module definition
+│   ├── internal/
+│   │   ├── crawler/           # Crawler logic (robots.txt, HTML parsing)
+│   │   └── s3/                # S3 client for image uploads
+│   ├── credentials.example    # Credentials template
+│   └── README.md              # Crawler documentation
+├── gui/                       # Web interface (isolated directory)
+│   ├── index.html            # Meme search interface
+│   ├── styles.css            # GUI styling
+│   ├── app.js                # JavaScript application logic
+│   └── README.md             # GUI documentation
+├── index.html                # Landing page
+├── style.css                 # Landing page styles
+├── README.md                # Project documentation (this file)
+├── SETUP.md                  # Detailed setup guide
+├── LICENSE                   # Open source license
+├── CONTRIBUTING.md           # Contribution guidelines
+└── docs/                     # Additional documentation
+    ├── ARCHITECTURE.md
+    ├── DEVELOPMENT.md
+    └── ...
 ```
 
 ## 🎨 Design Philosophy
@@ -117,18 +171,46 @@ This project is open source and available under the [License](LICENSE).
 
 ## 🗺️ Roadmap
 
-- [ ] Complete basic web interface
-- [ ] Establish community guidelines and code of conduct
-- [ ] Create first interactive AI experiment
-- [ ] Build contributor onboarding process
-- [ ] Develop educational content library
-- [ ] Launch community forums/discussions
+### Completed ✅
+- [x] Web crawler with robots.txt support
+- [x] Image downloading and S3 storage
+- [x] Web GUI for meme search
+- [x] Secure credential management
+- [x] Landing page
+
+### In Progress 🚧
+- [ ] Backend API to serve memes from S3
+- [ ] Database for meme metadata
+- [ ] Full-text search functionality
+- [ ] Image deduplication
+
+### Planned 📋
+- [ ] Advanced meme filtering (ML-based)
+- [ ] User favorites/bookmarks
+- [ ] Tag system for memes
+- [ ] Share functionality
+- [ ] Community forums/discussions
+- [ ] Educational content library
+
+## 📚 Documentation
+
+- 📖 [Setup Guide](SETUP.md) - Complete setup instructions
+- 🤖 [Crawler README](crawler/README.md) - Crawler documentation
+- 🎨 [GUI README](gui/README.md) - GUI documentation
+- 🏗️ [Architecture](docs/ARCHITECTURE.md) - Technical architecture
 
 ## 📞 Contact & Support
 
 - 🐛 **Issues**: [GitHub Issues](https://github.com/your-username/giggles.ai/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/your-username/giggles.ai/discussions)
 - 📧 **Email**: [Contact us](mailto:hello@giggles.ai)
+
+## 🔒 Security
+
+- Credentials are managed via environment variables
+- Never commit `.env` files or credentials to Git
+- Use IAM roles for AWS infrastructure
+- See [SETUP.md](SETUP.md) for security best practices
 
 ---
 

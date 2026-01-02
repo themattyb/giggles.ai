@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giggles.ai - AI Meme Search</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">🎭 Giggles.ai</h1>
+            <p class="subtitle">Search for funny AI memes from around the internet</p>
+        </header>
+
+        <div class="search-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="Search for memes (e.g., 'chatgpt', 'ai art', 'robots')..."
+                    autocomplete="off"
+                >
+                <button id="searchButton" class="search-button">Search</button>
+            </div>
+            <div class="filter-container">
+                <label for="sortSelect" class="filter-label">Sort by:</label>
+                <select id="sortSelect" class="filter-select">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="random">Random</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="loadingIndicator" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Loading memes...</p>
+        </div>
+
+        <div id="errorMessage" class="error-message hidden"></div>
+
+        <div id="resultsContainer" class="results-container">
+            <div id="memeGrid" class="meme-grid"></div>
+            <div id="noResults" class="no-results hidden">
+                <p>No memes found. Try a different search term!</p>
+            </div>
+        </div>
+
+        <div id="pagination" class="pagination hidden">
+            <button id="prevButton" class="pagination-button">Previous</button>
+            <span id="pageInfo" class="page-info"></span>
+            <button id="nextButton" class="pagination-button">Next</button>
+        </div>
+    </div>
+
+    <!-- Modal for full-size image view -->
+    <div id="imageModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <img id="modalImage" class="modal-image" src="" alt="Meme">
+            <div class="modal-info">
+                <p id="modalSource" class="modal-source"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
