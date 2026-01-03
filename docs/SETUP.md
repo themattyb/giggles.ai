@@ -84,7 +84,7 @@ go build -o crawler .
 
 ```bash
 ./crawler \
-  -start-url "https://www.reddit.com/r/artificial" \
+  -start-urls "https://www.reddit.com/r/artificial,https://www.reddit.com/r/aifails,https://www.boredpanda.com/ai-fails/,https://www.cameo.com/chuffsters,https://www.unspeakable.com/,https://www.facebook.com/AliAreacts,https://cheezburger.com/38652165/28-hilarious-ai-fails-that-prove-were-safe-from-robot-overlords-for-now,https://www.quora.com/What-are-some-of-the-funniest-Artifical-Intelligence-AI-failures,https://www.facebook.com/groups/cursedaiwtf/posts/1716491672292642/" \
   -s3-bucket "your-bucket-name" \
   -s3-region "us-east-1" \
   -workers 5 \
@@ -160,7 +160,8 @@ Create an IAM user with this policy (minimum required permissions):
 
 ### Crawler Options
 
-- `-start-url`: Starting URL to crawl (required)
+- `-start-urls`: Comma-separated list of starting URLs to crawl (required)
+- `-start-url`: Single starting URL (deprecated, use -start-urls instead)
 - `-s3-bucket`: S3 bucket name (optional, but recommended)
 - `-s3-region`: AWS region (default: us-east-1)
 - `-workers`: Number of concurrent workers (default: 5)
@@ -170,9 +171,9 @@ Create an IAM user with this policy (minimum required permissions):
 
 ### Example Commands
 
-**Crawl Reddit for AI memes:**
+**Crawl multiple sources for AI memes:**
 ```bash
-./crawler -start-url "https://www.reddit.com/r/artificial" \
+./crawler -start-urls "https://www.reddit.com/r/artificial,https://www.reddit.com/r/aifails,https://www.boredpanda.com/ai-fails/,https://www.cameo.com/chuffsters,https://www.unspeakable.com/,https://www.facebook.com/AliAreacts,https://cheezburger.com/38652165/28-hilarious-ai-fails-that-prove-were-safe-from-robot-overlords-for-now,https://www.quora.com/What-are-some-of-the-funniest-Artifical-Intelligence-AI-failures,https://www.facebook.com/groups/cursedaiwtf/posts/1716491672292642/" \
   -s3-bucket "giggles-memes" \
   -workers 3 \
   -delay 3s \
@@ -181,7 +182,7 @@ Create an IAM user with this policy (minimum required permissions):
 
 **Crawl without S3 (testing):**
 ```bash
-./crawler -start-url "https://example.com/memes" \
+./crawler -start-urls "https://www.boredpanda.com/ai-fails/,https://www.reddit.com/r/aifails" \
   -workers 5 \
   -max-pages 20
 ```

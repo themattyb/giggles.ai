@@ -62,7 +62,7 @@ The crawler uses AWS SDK's default credential chain, which checks in this order:
 
 ```bash
 ./crawler \
-  -start-url "https://www.reddit.com/r/artificial" \
+  -start-urls "https://www.reddit.com/r/artificial,https://www.reddit.com/r/aifails,https://www.boredpanda.com/ai-fails/,https://www.cameo.com/chuffsters,https://www.unspeakable.com/,https://www.facebook.com/AliAreacts,https://cheezburger.com/38652165/28-hilarious-ai-fails-that-prove-were-safe-from-robot-overlords-for-now,https://www.quora.com/What-are-some-of-the-funniest-Artifical-Intelligence-AI-failures,https://www.facebook.com/groups/cursedaiwtf/posts/1716491672292642/" \
   -s3-bucket "my-memes-bucket" \
   -s3-region "us-east-1" \
   -workers 5 \
@@ -72,7 +72,8 @@ The crawler uses AWS SDK's default credential chain, which checks in this order:
 
 ### Command Line Options
 
-- `-start-url`: Starting URL to crawl from (required)
+- `-start-urls`: Comma-separated list of starting URLs to crawl from (required)
+- `-start-url`: Single starting URL (deprecated, use -start-urls instead)
 - `-s3-bucket`: S3 bucket name for storing images (optional)
 - `-s3-region`: AWS region for S3 bucket (default: us-east-1)
 - `-workers`: Number of concurrent workers (default: 5)
@@ -82,9 +83,9 @@ The crawler uses AWS SDK's default credential chain, which checks in this order:
 
 ### Examples
 
-**Crawl Reddit for AI memes:**
+**Crawl multiple sources for AI memes:**
 ```bash
-./crawler -start-url "https://www.reddit.com/r/artificial" \
+./crawler -start-urls "https://www.reddit.com/r/artificial,https://www.reddit.com/r/aifails,https://www.boredpanda.com/ai-fails/,https://www.cameo.com/chuffsters,https://www.unspeakable.com/,https://www.facebook.com/AliAreacts,https://cheezburger.com/38652165/28-hilarious-ai-fails-that-prove-were-safe-from-robot-overlords-for-now,https://www.quora.com/What-are-some-of-the-funniest-Artifical-Intelligence-AI-failures,https://www.facebook.com/groups/cursedaiwtf/posts/1716491672292642/" \
   -s3-bucket "giggles-memes" \
   -workers 3 \
   -delay 3s \
@@ -93,7 +94,7 @@ The crawler uses AWS SDK's default credential chain, which checks in this order:
 
 **Crawl without S3 (just download locally):**
 ```bash
-./crawler -start-url "https://example.com/memes" \
+./crawler -start-urls "https://www.boredpanda.com/ai-fails/,https://www.reddit.com/r/aifails" \
   -workers 5 \
   -max-pages 20
 ```

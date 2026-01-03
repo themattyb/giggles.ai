@@ -14,17 +14,29 @@ import (
 func main() {
 	// Command line flags
 	var (
-		workers     = flag.Int("workers", 5, "Number of concurrent workers")
-		delay       = flag.Duration("delay", 2*time.Second, "Delay between requests")
-		maxPages    = flag.Int("max-pages", 100, "Maximum number of pages to crawl")
-		s3Bucket    = flag.String("s3-bucket", "", "S3 bucket name for storing images")
-		s3Region    = flag.String("s3-region", "us-east-1", "AWS region for S3 bucket")
-		startURLs   = flag.String("start-urls", "", "Comma-separated list of starting URLs to crawl from")
-		startURL    = flag.String("start-url", "", "Starting URL to crawl from (deprecated, use -start-urls)")
-		userAgent   = flag.String("user-agent", "giggles-ai-crawler/1.0", "User agent string")
-		localDir    = flag.String("local-dir", "found-images", "Local directory to save images")
+		workers      = flag.Int("workers", 5, "Number of concurrent workers")
+		delay        = flag.Duration("delay", 2*time.Second, "Delay between requests")
+		maxPages     = flag.Int("max-pages", 100, "Maximum number of pages to crawl")
+		s3Bucket     = flag.String("s3-bucket", "", "S3 bucket name for storing images")
+		s3Region     = flag.String("s3-region", "us-east-1", "AWS region for S3 bucket")
+		startURLs    = flag.String("start-urls", "", "Comma-separated list of starting URLs to crawl from")
+		startURL     = flag.String("start-url", "", "Starting URL to crawl from (deprecated, use -start-urls)")
+		userAgent    = flag.String("user-agent", "giggles-ai-crawler/1.0", "User agent string")
+		localDir     = flag.String("local-dir", "found-images", "Local directory to save images")
+		dedupe       = flag.Bool("dedupe", false, "Run deduplication on found-images directory (exits after deduplication)")
+		dedupeDir    = flag.String("dedupe-dir", "found-images", "Directory to deduplicate (used with -dedupe)")
 	)
 	flag.Parse()
+
+	// If dedupe flag is set, run deduplication and exit
+	if *dedupe {
+		log.Printf("Running deduplication on directory: %s", *dedupeDir)
+		if err := RunDeduplication(*dedupeDir); err != nil {
+			log.Fatalf("Deduplication failed: %v", err)
+		}
+		log.Println("Deduplication completed successfully")
+		return
+	}
 
 	// Parse start URLs
 	var startURLsList []string
@@ -42,9 +54,9 @@ func main() {
 		startURLsList = []string{*startURL}
 	}
 
-	// Validate required flags
+	// Validate required flags (only if not running deduplication)
 	if len(startURLsList) == 0 {
-		log.Fatal("Error: -start-urls is required (comma-separated list of URLs)")
+		log.Fatal("Error: -start-urls is required (comma-separated list of URLs), or use -dedupe to run deduplication")
 	}
 
 	if *s3Bucket == "" {

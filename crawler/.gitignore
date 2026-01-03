@@ -38,4 +38,7 @@ Thumbs.db
 # Crawled images
 found-images/
 
+# Hash database (local tracking file)
+.hashdb.json
+
 

@@ -71,7 +71,7 @@ Giggles.ai aims to create a fun and interactive space where AI can be a delightf
 
 4. **Run the crawler:**
    ```bash
-   ./crawler -start-url "https://www.reddit.com/r/artificial" \
+   ./crawler -start-urls "https://www.reddit.com/r/artificial,https://www.reddit.com/r/aifails,https://www.boredpanda.com/ai-fails/,https://www.cameo.com/chuffsters,https://www.unspeakable.com/,https://www.facebook.com/AliAreacts,https://cheezburger.com/38652165/28-hilarious-ai-fails-that-prove-were-safe-from-robot-overlords-for-now,https://www.quora.com/What-are-some-of-the-funniest-Artifical-Intelligence-AI-failures,https://www.facebook.com/groups/cursedaiwtf/posts/1716491672292642/" \
      -s3-bucket "your-bucket-name" \
      -workers 5 \
      -delay 2s \
