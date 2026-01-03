@@ -121,7 +121,8 @@ giggles.ai/
 │   └── app.js           # JavaScript logic
 ├── index.html           # Landing page
 ├── style.css            # Landing page styles
-└── SETUP.md            # This file
+└── docs/               # All documentation
+    └── SETUP.md        # This file
 ```
 
 ## Security Best Practices
@@ -216,8 +217,8 @@ Create an IAM user with this policy (minimum required permissions):
 
 ## Getting Help
 
-- 📖 Check the [crawler README](crawler/README.md)
-- 📖 Check the [GUI README](gui/README.md)
+- 📖 Check the [Crawler Documentation](CRAWLER.md)
+- 📖 Check the [GUI Documentation](GUI.md)
 - 🐛 [Report issues](https://github.com/your-username/giggles.ai/issues)
 - 💬 [Join discussions](https://github.com/your-username/giggles.ai/discussions)
 

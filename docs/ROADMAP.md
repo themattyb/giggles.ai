@@ -277,7 +277,7 @@ To create the most welcoming, fun, and educational AI learning platform where cu
   <p><em>Whether you're a seasoned AI expert or just beginning your journey, there's a place for you in our community!</em></p>
   
   <p>
-    <a href="../CONTRIBUTING.md">Start Contributing</a> | 
+    <a href="CONTRIBUTING.md">Start Contributing</a> | 
     <a href="https://github.com/your-username/giggles.ai/discussions">Join Discussions</a> | 
     <a href="mailto:hello@giggles.ai">Contact Us</a>
   </p>

@@ -404,7 +404,7 @@ test(ui): add accessibility tests for main navigation
 
 ### Documentation
 - [Architecture Guide](ARCHITECTURE.md) - Technical architecture overview
-- [Contributing Guide](../CONTRIBUTING.md) - Contribution guidelines
+- [Contributing Guide](CONTRIBUTING.md) - Contribution guidelines
 - [README](../README.md) - Project overview and setup
 
 ---

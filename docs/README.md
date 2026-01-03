@@ -6,13 +6,16 @@ Welcome to the giggles.ai documentation hub! Here you'll find everything you nee
 
 ### Getting Started
 - **[Project README](../README.md)** - Main project overview, setup, and getting started guide
+- **[Setup Guide](SETUP.md)** - Complete setup instructions including AWS configuration
 - **[FAQ](FAQ.md)** - Frequently asked questions about the project and community
-- **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute to the project
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
 
 ### Development
 - **[Development Guide](DEVELOPMENT.md)** - Detailed development setup and coding standards
 - **[Architecture Documentation](ARCHITECTURE.md)** - Technical architecture and design decisions
-- **[Changelog](../CHANGELOG.md)** - Project changes and version history
+- **[Crawler Documentation](CRAWLER.md)** - Web crawler documentation and usage
+- **[GUI Documentation](GUI.md)** - Web interface documentation
+- **[Changelog](CHANGELOG.md)** - Project changes and version history
 
 ### Planning & Vision
 - **[Project Roadmap](ROADMAP.md)** - Future plans and development phases
@@ -22,19 +25,21 @@ Welcome to the giggles.ai documentation hub! Here you'll find everything you nee
 
 ### For New Contributors
 1. Start with the [README](../README.md) to understand the project
-2. Read our [Contributing Guidelines](../CONTRIBUTING.md)
+2. Read our [Contributing Guidelines](CONTRIBUTING.md)
 3. Check the [FAQ](FAQ.md) for common questions
 4. Review the [Development Guide](DEVELOPMENT.md) for technical setup
 
 ### For Developers
 1. **Technical Overview**: [Architecture Documentation](ARCHITECTURE.md)
 2. **Setup & Standards**: [Development Guide](DEVELOPMENT.md)
-3. **Future Plans**: [Project Roadmap](ROADMAP.md)
-4. **Change History**: [Changelog](../CHANGELOG.md)
+3. **Crawler Details**: [Crawler Documentation](CRAWLER.md)
+4. **GUI Details**: [GUI Documentation](GUI.md)
+5. **Future Plans**: [Project Roadmap](ROADMAP.md)
+6. **Change History**: [Changelog](CHANGELOG.md)
 
 ### For Community Members
 1. **Project Vision**: [README](../README.md)
-2. **How to Help**: [Contributing Guide](../CONTRIBUTING.md)
+2. **How to Help**: [Contributing Guide](CONTRIBUTING.md)
 3. **Common Questions**: [FAQ](FAQ.md)
 4. **What's Coming**: [Roadmap](ROADMAP.md)
 
@@ -69,24 +74,25 @@ Information about our community and culture
 ### By Role
 
 **🆕 New to the Project?**
-→ [README](../README.md) → [FAQ](FAQ.md) → [Contributing](../CONTRIBUTING.md)
+→ [README](../README.md) → [FAQ](FAQ.md) → [Contributing](CONTRIBUTING.md)
 
 **👩‍💻 Want to Code?**
-→ [Development Guide](DEVELOPMENT.md) → [Architecture](ARCHITECTURE.md) → [Contributing](../CONTRIBUTING.md)
+→ [Development Guide](DEVELOPMENT.md) → [Architecture](ARCHITECTURE.md) → [Contributing](CONTRIBUTING.md)
 
 **🎨 Want to Design/Create Content?**
-→ [Contributing Guide](../CONTRIBUTING.md) → [Roadmap](ROADMAP.md) → [FAQ](FAQ.md)
+→ [Contributing Guide](CONTRIBUTING.md) → [Roadmap](ROADMAP.md) → [FAQ](FAQ.md)
 
 **🏗️ Planning Contributions?**
 → [Roadmap](ROADMAP.md) → [Architecture](ARCHITECTURE.md) → [Development Guide](DEVELOPMENT.md)
 
 ### By Topic
 
-**Technical Setup**: [Development Guide](DEVELOPMENT.md)
+**Technical Setup**: [Setup Guide](SETUP.md) + [Development Guide](DEVELOPMENT.md)
 **Project Vision**: [README](../README.md) + [Roadmap](ROADMAP.md)
-**How to Contribute**: [Contributing Guide](../CONTRIBUTING.md)
-**Community Guidelines**: [FAQ](FAQ.md) + [Contributing](../CONTRIBUTING.md)
+**How to Contribute**: [Contributing Guide](CONTRIBUTING.md)
+**Community Guidelines**: [FAQ](FAQ.md) + [Contributing](CONTRIBUTING.md)
 **Technical Architecture**: [Architecture Documentation](ARCHITECTURE.md)
+**Component Documentation**: [Crawler](CRAWLER.md) + [GUI](GUI.md)
 
 ## 🆕 What's New
 
@@ -155,7 +161,7 @@ We welcome contributions to our documentation! Here's how you can help:
   
   <p>
     <a href="../README.md">Get Started</a> | 
-    <a href="../CONTRIBUTING.md">Contribute</a> | 
+    <a href="CONTRIBUTING.md">Contribute</a> | 
     <a href="FAQ.md">Ask Questions</a>
   </p>
 </div>

@@ -88,7 +88,7 @@ Giggles.ai aims to create a fun and interactive space where AI can be a delightf
 
 ### Detailed Setup
 
-For complete setup instructions, including S3 bucket creation and security best practices, see [SETUP.md](SETUP.md).
+For complete setup instructions, including S3 bucket creation and security best practices, see [docs/SETUP.md](docs/SETUP.md).
 
 ### Development
 
@@ -120,7 +120,7 @@ We welcome contributions from developers, designers, AI researchers, educators, 
 5. Push to the branch (`git push origin feature/amazing-feature`)
 6. Open a Pull Request
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 
 ## 📁 Project Structure
 
@@ -132,23 +132,26 @@ giggles.ai/
 │   ├── internal/
 │   │   ├── crawler/           # Crawler logic (robots.txt, HTML parsing)
 │   │   └── s3/                # S3 client for image uploads
-│   ├── credentials.example    # Credentials template
-│   └── README.md              # Crawler documentation
+│   └── credentials.example    # Credentials template
 ├── gui/                       # Web interface (isolated directory)
 │   ├── index.html            # Meme search interface
 │   ├── styles.css            # GUI styling
-│   ├── app.js                # JavaScript application logic
-│   └── README.md             # GUI documentation
+│   └── app.js                # JavaScript application logic
 ├── index.html                # Landing page
 ├── style.css                 # Landing page styles
 ├── README.md                # Project documentation (this file)
-├── SETUP.md                  # Detailed setup guide
 ├── LICENSE                   # Open source license
-├── CONTRIBUTING.md           # Contribution guidelines
-└── docs/                     # Additional documentation
-    ├── ARCHITECTURE.md
-    ├── DEVELOPMENT.md
-    └── ...
+└── docs/                     # All documentation
+    ├── README.md            # Documentation index
+    ├── SETUP.md             # Detailed setup guide
+    ├── CONTRIBUTING.md      # Contribution guidelines
+    ├── CHANGELOG.md         # Project changelog
+    ├── CRAWLER.md           # Crawler documentation
+    ├── GUI.md               # GUI documentation
+    ├── ARCHITECTURE.md      # Technical architecture
+    ├── DEVELOPMENT.md       # Development guide
+    ├── FAQ.md               # Frequently asked questions
+    └── ROADMAP.md           # Project roadmap
 ```
 
 ## 🎨 Design Philosophy
@@ -194,17 +197,20 @@ This project is open source and available under the [License](LICENSE).
 
 ## 📚 Documentation
 
-- 📖 [Setup Guide](SETUP.md) - Complete setup instructions
-- 🤖 [Crawler README](crawler/README.md) - Crawler documentation
-- 🎨 [GUI README](gui/README.md) - GUI documentation
+All documentation is now in the [docs/](docs/) folder:
+
+- 📖 [Setup Guide](docs/SETUP.md) - Complete setup instructions
+- 🤖 [Crawler Documentation](docs/CRAWLER.md) - Crawler documentation
+- 🎨 [GUI Documentation](docs/GUI.md) - GUI documentation
 - 🏗️ [Architecture](docs/ARCHITECTURE.md) - Technical architecture
+- 📋 [Documentation Index](docs/README.md) - Complete documentation hub
 
 ## 🔒 Security
 
 - Credentials are managed via environment variables
 - Never commit `.env` files or credentials to Git
 - Use IAM roles for AWS infrastructure
-- See [SETUP.md](SETUP.md) for security best practices
+- See [docs/SETUP.md](docs/SETUP.md) for security best practices
 
 ---
 

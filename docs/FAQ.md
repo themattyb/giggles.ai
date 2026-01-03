@@ -60,7 +60,7 @@ We welcome all kinds of contributions:
 
 ### How do I get started as a contributor?
 
-1. Read our [Contributing Guide](../CONTRIBUTING.md)
+1. Read our [Contributing Guide](CONTRIBUTING.md)
 2. Check out [good first issues](https://github.com/your-username/giggles.ai/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 3. Join our community discussions
 4. Introduce yourself and let us know your interests!
@@ -161,7 +161,7 @@ Our community guidelines are based on:
 - **Be Constructive**: Focus on helpful, actionable feedback
 - **Be Playful**: Don't forget to have fun!
 
-See our full [Code of Conduct](../CONTRIBUTING.md#code-of-conduct) for details.
+See our full [Code of Conduct](CONTRIBUTING.md#code-of-conduct) for details.
 
 ### How do I get help if I'm stuck?
 
