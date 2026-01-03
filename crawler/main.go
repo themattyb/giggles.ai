@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
+	"strings"
 	"time"
 
 	"github.com/giggles-ai/crawler/internal/crawler"
@@ -19,19 +19,36 @@ func main() {
 		maxPages    = flag.Int("max-pages", 100, "Maximum number of pages to crawl")
 		s3Bucket    = flag.String("s3-bucket", "", "S3 bucket name for storing images")
 		s3Region    = flag.String("s3-region", "us-east-1", "AWS region for S3 bucket")
-		startURL    = flag.String("start-url", "", "Starting URL to crawl from")
+		startURLs   = flag.String("start-urls", "", "Comma-separated list of starting URLs to crawl from")
+		startURL    = flag.String("start-url", "", "Starting URL to crawl from (deprecated, use -start-urls)")
 		userAgent   = flag.String("user-agent", "giggles-ai-crawler/1.0", "User agent string")
-		configFile  = flag.String("config", "", "Path to configuration file (optional)")
+		localDir    = flag.String("local-dir", "found-images", "Local directory to save images")
 	)
 	flag.Parse()
 
+	// Parse start URLs
+	var startURLsList []string
+	if *startURLs != "" {
+		// Parse comma-separated URLs
+		urls := strings.Split(*startURLs, ",")
+		for _, u := range urls {
+			u = strings.TrimSpace(u)
+			if u != "" {
+				startURLsList = append(startURLsList, u)
+			}
+		}
+	} else if *startURL != "" {
+		// Support deprecated -start-url flag for backward compatibility
+		startURLsList = []string{*startURL}
+	}
+
 	// Validate required flags
-	if *startURL == "" {
-		log.Fatal("Error: -start-url is required")
+	if len(startURLsList) == 0 {
+		log.Fatal("Error: -start-urls is required (comma-separated list of URLs)")
 	}
 
 	if *s3Bucket == "" {
-		log.Println("Warning: -s3-bucket not specified, images will not be uploaded to S3")
+		log.Printf("Info: -s3-bucket not specified, images will be saved locally to: %s", *localDir)
 	}
 
 	// Initialize S3 client if bucket is provided
@@ -50,9 +67,10 @@ func main() {
 		Workers:     *workers,
 		Delay:       *delay,
 		MaxPages:    *maxPages,
-		StartURL:    *startURL,
+		StartURLs:   startURLsList,
 		UserAgent:   *userAgent,
 		S3Client:    s3Client,
+		LocalDir:    *localDir,
 	}
 
 	// Create and run crawler
@@ -63,7 +81,10 @@ func main() {
 
 	log.Printf("Starting crawler with %d workers, %v delay, max %d pages", 
 		*workers, *delay, *maxPages)
-	log.Printf("Starting URL: %s", *startURL)
+	log.Printf("Starting URLs (%d):", len(startURLsList))
+	for i, url := range startURLsList {
+		log.Printf("  %d. %s", i+1, url)
+	}
 
 	// Run the crawler
 	stats, err := c.Run()
@@ -80,4 +101,5 @@ func main() {
 	fmt.Printf("Errors: %d\n", stats.Errors)
 	fmt.Printf("Duration: %v\n", stats.Duration)
 }
+
 

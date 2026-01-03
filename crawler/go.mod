@@ -8,3 +8,4 @@ require (
 	golang.org/x/net v0.21.0
 )
 
+require github.com/jmespath/go-jmespath v0.4.0 // indirect

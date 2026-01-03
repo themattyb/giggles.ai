@@ -35,3 +35,7 @@ aws-credentials.txt
 .DS_Store
 Thumbs.db
 
+# Crawled images
+found-images/
+
+
