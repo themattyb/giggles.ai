@@ -23,6 +23,7 @@ func main() {
 		startURL     = flag.String("start-url", "", "Starting URL to crawl from (deprecated, use -start-urls)")
 		userAgent    = flag.String("user-agent", "giggles-ai-crawler/1.0", "User agent string")
 		localDir     = flag.String("local-dir", "found-images", "Local directory to save images")
+		insecure     = flag.Bool("insecure", false, "Skip TLS certificate verification (use only for testing)")
 		dedupe       = flag.Bool("dedupe", false, "Run deduplication on found-images directory (exits after deduplication)")
 		dedupeDir    = flag.String("dedupe-dir", "found-images", "Directory to deduplicate (used with -dedupe)")
 	)
@@ -76,13 +77,14 @@ func main() {
 
 	// Create crawler configuration
 	config := crawler.Config{
-		Workers:     *workers,
-		Delay:       *delay,
-		MaxPages:    *maxPages,
-		StartURLs:   startURLsList,
-		UserAgent:   *userAgent,
-		S3Client:    s3Client,
-		LocalDir:    *localDir,
+		Workers:            *workers,
+		Delay:              *delay,
+		MaxPages:           *maxPages,
+		StartURLs:          startURLsList,
+		UserAgent:          *userAgent,
+		S3Client:           s3Client,
+		LocalDir:           *localDir,
+		InsecureSkipVerify: *insecure,
 	}
 
 	// Create and run crawler
