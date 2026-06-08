@@ -205,12 +205,12 @@ Create an IAM user with this policy (minimum required permissions):
 ### GUI Issues
 
 - **Images not loading**: Check browser console for errors
-- **API connection**: Update `app.js` with your backend API endpoint
-- **CORS errors**: Configure your backend to allow CORS requests
+- **Memes not loading / blank page**: The app fetches `memes.json`, which fails on `file://`. Serve over HTTP (`python -m http.server 8000`) instead of opening the file directly. See [GUI.md](GUI.md#data-source).
+- **Pointing at S3**: Set `window.GIGGLES_MANIFEST_URL`, or regenerate `memes.json` with `crawler -gen-manifest -manifest-base-url <s3-prefix>`.
 
 ## Next Steps
 
-1. **Backend API**: Create an API to serve memes from S3 to the GUI
+1. **Hosting**: Serve the GUI and `memes.json` from S3/CloudFront (static site)
 2. **Database**: Store meme metadata (title, source, tags, etc.)
 3. **Search**: Implement full-text search functionality
 4. **Deduplication**: Prevent downloading duplicate images

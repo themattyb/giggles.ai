@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2024-01-15T00:00:00Z",
+  "memes": [
+    {
+      "id": "sample-1",
+      "url": "https://via.placeholder.com/400/4a90e2/ffffff?text=AI+Meme+1",
+      "title": "ChatGPT Meme",
+      "source": "Reddit",
+      "uploadedAt": "2024-01-15T00:00:00Z"
+    },
+    {
+      "id": "sample-2",
+      "url": "https://via.placeholder.com/400/357abd/ffffff?text=AI+Meme+2",
+      "title": "DALL-E Art",
+      "source": "Imgur",
+      "uploadedAt": "2024-01-14T00:00:00Z"
+    },
+    {
+      "id": "sample-3",
+      "url": "https://via.placeholder.com/400/6b6c76/ffffff?text=AI+Meme+3",
+      "title": "Robot Humor",
+      "source": "9GAG",
+      "uploadedAt": "2024-01-13T00:00:00Z"
+    }
+  ]
+}

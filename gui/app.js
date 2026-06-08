@@ -1,15 +1,31 @@
 // Giggles.ai Meme Search Application
-// This is a client-side application that searches and displays AI memes
+// Client-side app that loads a meme manifest (JSON) and lets the user search,
+// sort, filter, and page through the results. The manifest is produced by the
+// crawler (see `crawler -gen-manifest`) and served alongside these files, or
+// from S3. Pure logic lives in memeLogic.js so it can be unit-tested.
+
+import {
+    parseManifest,
+    filterMemes,
+    sortMemes,
+    paginate,
+    getPaginationInfo,
+} from './memeLogic.js';
+
+// Where to load memes from. Override by setting window.GIGGLES_MANIFEST_URL
+// before this script runs (e.g. to point at an S3 URL).
+const MANIFEST_URL = window.GIGGLES_MANIFEST_URL || './memes.json';
 
 class MemeSearchApp {
-    constructor() {
+    constructor(manifestUrl = MANIFEST_URL) {
+        this.manifestUrl = manifestUrl;
         this.currentPage = 1;
         this.itemsPerPage = 12;
         this.currentMemes = [];
         this.filteredMemes = [];
         this.sortOrder = 'newest';
         this.searchTerm = '';
-        
+
         this.initializeElements();
         this.attachEventListeners();
         this.loadInitialMemes();
@@ -45,6 +61,7 @@ class MemeSearchApp {
         // Sort functionality
         this.sortSelect.addEventListener('change', (e) => {
             this.sortOrder = e.target.value;
+            this.currentPage = 1;
             this.applySortAndFilter();
         });
 
@@ -69,52 +86,32 @@ class MemeSearchApp {
     }
 
     async loadInitialMemes() {
-        // In a real implementation, this would fetch from an API
-        // For now, we'll use mock data or fetch from S3 if configured
         this.showLoading();
-        
+
         try {
-            // TODO: Replace with actual API endpoint
-            // const response = await fetch('/api/memes');
-            // const data = await response.json();
-            
-            // Mock data for demonstration
-            this.currentMemes = this.getMockMemes();
+            const response = await fetch(this.manifestUrl, { cache: 'no-cache' });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status} fetching ${this.manifestUrl}`);
+            }
+            const data = await response.json();
+            this.currentMemes = parseManifest(data);
+
+            if (this.currentMemes.length === 0) {
+                this.showError('No memes are available yet. Run the crawler to collect some!');
+            }
             this.applySortAndFilter();
         } catch (error) {
-            this.showError('Failed to load memes. Please try again later.');
+            this.currentMemes = [];
+            this.filteredMemes = [];
+            this.renderMemes();
+            this.showError(
+                `Could not load memes from ${this.manifestUrl}. ` +
+                `Make sure a memes.json manifest is served here (see docs/GUI.md).`
+            );
             console.error('Error loading memes:', error);
         } finally {
             this.hideLoading();
         }
-    }
-
-    getMockMemes() {
-        // Mock data - replace with actual API call
-        // In production, this would fetch from your backend API that queries S3
-        return [
-            {
-                id: 1,
-                url: 'https://via.placeholder.com/400/4a90e2/ffffff?text=AI+Meme+1',
-                title: 'ChatGPT Meme',
-                source: 'Reddit',
-                uploadedAt: new Date('2024-01-15')
-            },
-            {
-                id: 2,
-                url: 'https://via.placeholder.com/400/357abd/ffffff?text=AI+Meme+2',
-                title: 'DALL-E Art',
-                source: 'Imgur',
-                uploadedAt: new Date('2024-01-14')
-            },
-            {
-                id: 3,
-                url: 'https://via.placeholder.com/400/6b6c76/ffffff?text=AI+Meme+3',
-                title: 'Robot Humor',
-                source: '9GAG',
-                uploadedAt: new Date('2024-01-13')
-            }
-        ];
     }
 
     performSearch() {
@@ -124,30 +121,10 @@ class MemeSearchApp {
     }
 
     applySortAndFilter() {
-        // Filter memes by the current search term. Reading from state (rather
-        // than an argument) keeps the active search applied when only the sort
-        // order changes.
-        const searchTerm = this.searchTerm;
-        this.filteredMemes = this.currentMemes.filter(meme => {
-            if (!searchTerm) return true;
-            const searchableText = `${meme.title} ${meme.source}`.toLowerCase();
-            return searchableText.includes(searchTerm);
-        });
-
-        // Sort memes
-        this.filteredMemes.sort((a, b) => {
-            switch (this.sortOrder) {
-                case 'newest':
-                    return b.uploadedAt - a.uploadedAt;
-                case 'oldest':
-                    return a.uploadedAt - b.uploadedAt;
-                case 'random':
-                    return Math.random() - 0.5;
-                default:
-                    return 0;
-            }
-        });
-
+        // Filter then sort using the pure logic helpers. Reading the search term
+        // from state keeps it applied when only the sort order changes.
+        const filtered = filterMemes(this.currentMemes, this.searchTerm);
+        this.filteredMemes = sortMemes(filtered, this.sortOrder);
         this.renderMemes();
     }
 
@@ -163,18 +140,11 @@ class MemeSearchApp {
         this.noResults.classList.add('hidden');
         this.pagination.classList.remove('hidden');
 
-        // Calculate pagination
-        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-        const endIndex = startIndex + this.itemsPerPage;
-        const pageMemes = this.filteredMemes.slice(startIndex, endIndex);
-
-        // Render meme cards
-        pageMemes.forEach(meme => {
-            const card = this.createMemeCard(meme);
-            this.memeGrid.appendChild(card);
+        const pageMemes = paginate(this.filteredMemes, this.currentPage, this.itemsPerPage);
+        pageMemes.forEach((meme) => {
+            this.memeGrid.appendChild(this.createMemeCard(meme));
         });
 
-        // Update pagination
         this.updatePagination();
     }
 
@@ -191,7 +161,7 @@ class MemeSearchApp {
         img.loading = 'lazy';
         img.alt = meme.title;
         img.src = meme.url;
-        img.addEventListener('error', function() {
+        img.addEventListener('error', function () {
             this.src = 'https://via.placeholder.com/400/f5f5f5/999999?text=Image+Not+Available';
             this.alt = 'Image not available';
         });
@@ -229,12 +199,14 @@ class MemeSearchApp {
     }
 
     updatePagination() {
-        const totalPages = Math.ceil(this.filteredMemes.length / this.itemsPerPage);
-        
-        this.pageInfo.textContent = `Page ${this.currentPage} of ${totalPages || 1}`;
-        
-        this.prevButton.disabled = this.currentPage === 1;
-        this.nextButton.disabled = this.currentPage >= totalPages || totalPages === 0;
+        const info = getPaginationInfo(
+            this.filteredMemes.length,
+            this.currentPage,
+            this.itemsPerPage
+        );
+        this.pageInfo.textContent = info.label;
+        this.prevButton.disabled = !info.hasPrev;
+        this.nextButton.disabled = !info.hasNext;
     }
 
     goToPreviousPage() {
@@ -246,7 +218,11 @@ class MemeSearchApp {
     }
 
     goToNextPage() {
-        const totalPages = Math.ceil(this.filteredMemes.length / this.itemsPerPage);
+        const { totalPages } = getPaginationInfo(
+            this.filteredMemes.length,
+            this.currentPage,
+            this.itemsPerPage
+        );
         if (this.currentPage < totalPages) {
             this.currentPage++;
             this.renderMemes();
@@ -267,43 +243,11 @@ class MemeSearchApp {
         this.errorMessage.textContent = message;
         this.errorMessage.classList.remove('hidden');
     }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // Method to fetch memes from API (to be implemented with backend)
-    async fetchMemesFromAPI(searchTerm = '') {
-        try {
-            // TODO: Replace with actual API endpoint
-            const apiUrl = '/api/memes';
-            const params = new URLSearchParams();
-            if (searchTerm) {
-                params.append('search', searchTerm);
-            }
-            params.append('page', this.currentPage);
-            params.append('limit', this.itemsPerPage);
-            params.append('sort', this.sortOrder);
-
-            const response = await fetch(`${apiUrl}?${params}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            return data.memes || [];
-        } catch (error) {
-            console.error('Error fetching memes:', error);
-            throw error;
-        }
-    }
 }
 
-// Initialize the application when DOM is loaded
+// Initialize the application when the DOM is ready.
 document.addEventListener('DOMContentLoaded', () => {
     new MemeSearchApp();
 });
 
-
+export { MemeSearchApp };

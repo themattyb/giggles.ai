@@ -17,20 +17,24 @@ import (
 func main() {
 	// Command line flags
 	var (
-		workers        = flag.Int("workers", 5, "Number of concurrent workers")
-		delay          = flag.Duration("delay", 2*time.Second, "Delay between requests")
-		maxPages       = flag.Int("max-pages", 100, "Maximum number of pages to crawl")
-		s3Bucket       = flag.String("s3-bucket", "", "S3 bucket name for storing images")
-		s3Region       = flag.String("s3-region", "us-east-1", "AWS region for S3 bucket")
-		startURLs      = flag.String("start-urls", "", "Comma-separated list of starting URLs to crawl from")
-		startURL       = flag.String("start-url", "", "Starting URL to crawl from (deprecated, use -start-urls)")
-		userAgent      = flag.String("user-agent", "giggles-ai-crawler/1.0", "User agent string")
-		localDir       = flag.String("local-dir", "found-images", "Local directory to save images")
-		insecure       = flag.Bool("insecure", false, "Skip TLS certificate verification (use only for testing)")
-		sameDomain     = flag.Bool("same-domain", false, "Only crawl links on the same domain(s) as the start URLs")
-		allowedDomains = flag.String("allowed-domains", "", "Comma-separated allow-list of domains to crawl (empty = any domain)")
-		dedupe         = flag.Bool("dedupe", false, "Run deduplication on found-images directory (exits after deduplication)")
-		dedupeDir      = flag.String("dedupe-dir", "found-images", "Directory to deduplicate (used with -dedupe)")
+		workers         = flag.Int("workers", 5, "Number of concurrent workers")
+		delay           = flag.Duration("delay", 2*time.Second, "Delay between requests")
+		maxPages        = flag.Int("max-pages", 100, "Maximum number of pages to crawl")
+		s3Bucket        = flag.String("s3-bucket", "", "S3 bucket name for storing images")
+		s3Region        = flag.String("s3-region", "us-east-1", "AWS region for S3 bucket")
+		startURLs       = flag.String("start-urls", "", "Comma-separated list of starting URLs to crawl from")
+		startURL        = flag.String("start-url", "", "Starting URL to crawl from (deprecated, use -start-urls)")
+		userAgent       = flag.String("user-agent", "giggles-ai-crawler/1.0", "User agent string")
+		localDir        = flag.String("local-dir", "found-images", "Local directory to save images")
+		insecure        = flag.Bool("insecure", false, "Skip TLS certificate verification (use only for testing)")
+		sameDomain      = flag.Bool("same-domain", false, "Only crawl links on the same domain(s) as the start URLs")
+		allowedDomains  = flag.String("allowed-domains", "", "Comma-separated allow-list of domains to crawl (empty = any domain)")
+		dedupe          = flag.Bool("dedupe", false, "Run deduplication on found-images directory (exits after deduplication)")
+		dedupeDir       = flag.String("dedupe-dir", "found-images", "Directory to deduplicate (used with -dedupe)")
+		genManifest     = flag.Bool("gen-manifest", false, "Generate a GUI manifest (memes.json) from a directory of images and exit")
+		manifestDir     = flag.String("manifest-dir", "found-images", "Directory of images to index (used with -gen-manifest)")
+		manifestOut     = flag.String("manifest-out", "memes.json", "Output path for the generated manifest (used with -gen-manifest)")
+		manifestBaseURL = flag.String("manifest-base-url", "", "Base URL prepended to each image filename in the manifest (e.g. an S3/CDN prefix)")
 	)
 	flag.Parse()
 
@@ -41,6 +45,16 @@ func main() {
 			log.Fatalf("Deduplication failed: %v", err)
 		}
 		log.Println("Deduplication completed successfully")
+		return
+	}
+
+	// If gen-manifest flag is set, build the GUI manifest and exit.
+	if *genManifest {
+		n, err := GenerateManifest(*manifestDir, *manifestOut, *manifestBaseURL, time.Now())
+		if err != nil {
+			log.Fatalf("Manifest generation failed: %v", err)
+		}
+		log.Printf("Wrote manifest with %d memes to %s", n, *manifestOut)
 		return
 	}
 

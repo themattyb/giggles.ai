@@ -127,7 +127,8 @@ See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 ```
 giggles.ai/
 ├── crawler/                    # Go web crawler
-│   ├── main.go                # Crawler entry point
+│   ├── main.go                # Crawler entry point (crawl, -dedupe, -gen-manifest)
+│   ├── manifest.go            # Generates the GUI memes.json manifest
 │   ├── go.mod                 # Go module definition
 │   ├── internal/
 │   │   ├── crawler/           # Crawler logic (robots.txt, HTML parsing)
@@ -136,7 +137,10 @@ giggles.ai/
 ├── gui/                       # Web interface (isolated directory)
 │   ├── index.html            # Meme search interface
 │   ├── styles.css            # GUI styling
-│   └── app.js                # JavaScript application logic
+│   ├── app.js                # App logic: DOM wiring + manifest fetch (ES module)
+│   ├── memeLogic.js          # Pure filter/sort/paginate helpers (tested)
+│   ├── memeLogic.test.js     # GUI unit tests (node --test)
+│   └── memes.json            # Sample data manifest
 ├── index.html                # Landing page
 ├── style.css                 # Landing page styles
 ├── README.md                # Project documentation (this file)

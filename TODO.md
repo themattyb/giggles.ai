@@ -21,7 +21,7 @@
 
 - [x] Add domain scoping to the crawler. Added `-same-domain` (restrict to the start URLs' domains) and `-allowed-domains` (explicit comma-separated allow-list); discovered links are filtered via `isAllowedDomain` before enqueue. Empty list preserves the old "follow anywhere" behavior. Covered by `TestIsAllowedDomain` / `TestNewSameDomainBuildsAllowList`.
 - [x] Handle OS signals (`SIGINT`/`SIGTERM`) for graceful shutdown so workers can drain and stats are printed on interrupt. `main.go` installs a handler that calls `Crawler.Stop()`, which closes a `done` channel; workers and the coordinator select on it and exit cleanly, then `Run` returns and stats print as normal.
-- [ ] Connect the GUI to real data. The frontend uses 3 hardcoded placeholder memes (`gui/app.js:91-117`) with no backend API. Build an API layer or have the GUI read from S3 directly.
+- [x] Connect the GUI to real data. The GUI now fetches a `memes.json` manifest (default `./memes.json`, override via `window.GIGGLES_MANIFEST_URL`) instead of hardcoded mock data, with loading/error states. The crawler generates the manifest via `-gen-manifest` (`crawler/manifest.go`), optionally with an S3/CDN base URL. Pure data logic extracted to `gui/memeLogic.js`.
 
 ## Testing
 
@@ -47,6 +47,7 @@
 
 ### GUI tests (`gui/`)
 
-- [ ] `escapeHtml`: escapes `<`, `>`, `&`, and `"` characters
-- [ ] `applySortAndFilter`: "newest" sort returns most recent first, search term filters by title and source, empty search returns all memes
-- [ ] `updatePagination`: disables prev button on page 1, disables next button on last page, shows correct "Page X of Y" text
+- [x] `escapeHtml`: escapes `<`, `>`, `&`, `"`, and `'` characters (`gui/memeLogic.test.js`)
+- [x] `filterMemes` / `sortMemes`: newest/oldest ordering, search filters by title and source, empty search returns all memes, sort doesn't mutate input (`gui/memeLogic.test.js`)
+- [x] `getPaginationInfo` / `paginate`: prev disabled on page 1, next disabled on last page, correct "Page X of Y" text, correct page slices (`gui/memeLogic.test.js`)
+- Note: tests run via Node's built-in runner (`cd gui && npm test`); logic was extracted from `app.js` into `gui/memeLogic.js` to be DOM-free and testable.

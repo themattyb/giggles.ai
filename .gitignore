@@ -30,4 +30,8 @@ Thumbs.db
 # Logs
 *.log
 
+# Node (GUI dev tooling)
+node_modules/
+npm-debug.log*
+
 

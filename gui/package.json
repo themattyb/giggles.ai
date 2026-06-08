@@ -1,0 +1,10 @@
+{
+  "name": "giggles-gui",
+  "version": "1.0.0",
+  "description": "Static front-end for browsing AI memes",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

@@ -83,6 +83,8 @@ The crawler uses AWS SDK's default credential chain, which checks in this order:
 - `-same-domain`: Only follow links on the same domain(s) as the start URLs (default: off — follows links anywhere)
 - `-allowed-domains`: Comma-separated allow-list of domains to crawl, e.g. `reddit.com,imgur.com` (empty = any domain)
 - `-insecure`: Skip TLS certificate verification — testing only (default: off)
+- `-dedupe`: Deduplicate a directory of images and exit (see `-dedupe-dir`)
+- `-gen-manifest`: Generate a GUI `memes.json` manifest from a directory and exit. Use with `-manifest-dir` (source images), `-manifest-out` (output path), and `-manifest-base-url` (URL prefix for each image, e.g. an S3/CDN base)
 
 ### Examples
 

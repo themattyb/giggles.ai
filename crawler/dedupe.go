@@ -27,9 +27,9 @@ type HashDatabase struct {
 
 // Deduplicator handles file deduplication
 type Deduplicator struct {
-	imageDir    string
-	hashDBFile  string
-	database    HashDatabase
+	imageDir   string
+	hashDBFile string
+	database   HashDatabase
 }
 
 // NewDeduplicator creates a new deduplicator instance
@@ -131,7 +131,7 @@ func (d *Deduplicator) ProcessFiles() error {
 		}
 
 		filePath := filepath.Join(d.imageDir, file.Name())
-		
+
 		log.Printf("Processing: %s", file.Name())
 
 		// Calculate hash
@@ -273,4 +273,3 @@ func RunDeduplication(imageDir string) error {
 
 	return nil
 }
-

@@ -68,7 +68,9 @@ Coverage so far: unit tests for the pure crawler helpers (`isMemeImage`, `resolv
 - `isMemeImage` decides what to download via filename-keyword + known-meme-domain heuristics — the central tuning point for crawl precision (its keyword matching has known false positives; see `TODO.md`)
 
 **GUI** (`gui/`) — Vanilla HTML/CSS/JS, no framework:
-- `app.js` — `MemeSearchApp` class handling search, pagination, sorting, filtering (currently uses mock data; future: API backend)
+- `app.js` — `MemeSearchApp` class (ES module): DOM wiring + fetches a `memes.json` manifest (override via `window.GIGGLES_MANIFEST_URL`). Loaded with `<script type="module">`
+- `memeLogic.js` — pure, DOM-free filter/sort/paginate/escape helpers, unit-tested in `memeLogic.test.js` via Node's built-in runner (`cd gui && npm test`)
+- The crawler generates the manifest: `go run . -gen-manifest -manifest-dir found-images -manifest-out ../gui/memes.json` (see `manifest.go`)
 - `index.html` / `styles.css` — Responsive search interface with CSS custom properties for theming
 
 **Landing Page** (root) — `index.html` + `style.css`, separate from the GUI
