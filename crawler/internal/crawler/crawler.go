@@ -25,6 +25,9 @@ const (
 	maxHTMLSize   = 10 << 20 // 10 MB per HTML page
 	maxImageSize  = 50 << 20 // 50 MB per image
 	maxRobotsSize = 1 << 20  // 1 MB per robots.txt
+
+	httpAttempts = 2                      // initial try + one retry on transient failure
+	retryBackoff = 500 * time.Millisecond // pause before a retry
 )
 
 // Config holds crawler configuration
@@ -421,18 +424,52 @@ func (c *Crawler) fetchRobotsTxt(robotsURL string) *robotstxt.RobotsData {
 }
 
 // processPage fetches a page and extracts images and links
+// getWithRetry issues a GET for urlStr, retrying once on a network error or a
+// 5xx response. Sites under load return sporadic 502/503/522 (seen in the wild
+// from memegenerator.net); a single backed-off retry recovers most of them
+// without hammering the origin. The caller owns closing the response body.
+func (c *Crawler) getWithRetry(urlStr string, headers map[string]string) (*http.Response, error) {
+	var lastErr error
+	for attempt := 0; attempt < httpAttempts; attempt++ {
+		if attempt > 0 {
+			select {
+			case <-time.After(retryBackoff):
+			case <-c.done:
+				return nil, fmt.Errorf("stopped before retry")
+			}
+		}
+
+		req, err := http.NewRequest("GET", urlStr, nil)
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+
+		resp, err := c.client.Do(req)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if resp.StatusCode >= 500 && resp.StatusCode <= 599 {
+			resp.Body.Close()
+			lastErr = fmt.Errorf("transient status: %d", resp.StatusCode)
+			continue
+		}
+		return resp, nil
+	}
+	return nil, lastErr
+}
+
 func (c *Crawler) processPage(urlStr string, workerID int) error {
 	log.Printf("[Worker %d] Processing: %s", workerID, urlStr)
 
-	req, err := http.NewRequest("GET", urlStr, nil)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("User-Agent", c.config.UserAgent)
-	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-	req.Header.Set("Accept-Language", "en-US,en;q=0.5")
-
-	resp, err := c.client.Do(req)
+	resp, err := c.getWithRetry(urlStr, map[string]string{
+		"User-Agent":      c.config.UserAgent,
+		"Accept":          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+		"Accept-Language": "en-US,en;q=0.5",
+	})
 	if err != nil {
 		return err
 	}
@@ -696,14 +733,9 @@ func (c *Crawler) markImageSeen(imgURL string) bool {
 func (c *Crawler) downloadImage(imgURL string, workerID int) {
 	log.Printf("[Worker %d] Downloading image: %s", workerID, imgURL)
 
-	req, err := http.NewRequest("GET", imgURL, nil)
-	if err != nil {
-		log.Printf("[Worker %d] Error creating request: %v", workerID, err)
-		return
-	}
-	req.Header.Set("User-Agent", c.config.UserAgent)
-
-	resp, err := c.client.Do(req)
+	resp, err := c.getWithRetry(imgURL, map[string]string{
+		"User-Agent": c.config.UserAgent,
+	})
 	if err != nil {
 		log.Printf("[Worker %d] Error downloading image: %v", workerID, err)
 		return

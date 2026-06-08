@@ -179,6 +179,48 @@ func TestCrawlerDownloadsEachImageOnce(t *testing.T) {
 	}
 }
 
+func TestCrawlerRetriesTransientErrors(t *testing.T) {
+	var hits int64
+	mux := http.NewServeMux()
+	mux.HandleFunc("/robots.txt", http.NotFound)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Fail the first request with a transient 503, then succeed.
+		if atomic.AddInt64(&hits, 1) == 1 {
+			http.Error(w, "busy", http.StatusServiceUnavailable)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><body>ok</body></html>`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	c, err := New(Config{
+		Workers:   1,
+		Delay:     0,
+		MaxPages:  5,
+		StartURLs: []string{srv.URL + "/"},
+		UserAgent: "test-agent",
+		LocalDir:  t.TempDir(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stats, err := c.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// A single retry should recover the 503 and the page should be crawled.
+	if stats.PagesCrawled != 1 {
+		t.Errorf("expected 1 page crawled after retrying a transient 503, got %d", stats.PagesCrawled)
+	}
+	if got := atomic.LoadInt64(&hits); got != 2 {
+		t.Errorf("expected the page to be fetched twice (fail then retry), got %d", got)
+	}
+}
+
 func TestStopIsGraceful(t *testing.T) {
 	// Each page links to a fresh deeper path, so the queue keeps growing and the
 	// crawler would run indefinitely without intervention.
