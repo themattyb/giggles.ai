@@ -8,6 +8,7 @@ class MemeSearchApp {
         this.currentMemes = [];
         this.filteredMemes = [];
         this.sortOrder = 'newest';
+        this.searchTerm = '';
         
         this.initializeElements();
         this.attachEventListeners();
@@ -117,13 +118,16 @@ class MemeSearchApp {
     }
 
     performSearch() {
-        const searchTerm = this.searchInput.value.trim().toLowerCase();
+        this.searchTerm = this.searchInput.value.trim().toLowerCase();
         this.currentPage = 1;
-        this.applySortAndFilter(searchTerm);
+        this.applySortAndFilter();
     }
 
-    applySortAndFilter(searchTerm = '') {
-        // Filter memes by search term
+    applySortAndFilter() {
+        // Filter memes by the current search term. Reading from state (rather
+        // than an argument) keeps the active search applied when only the sort
+        // order changes.
+        const searchTerm = this.searchTerm;
         this.filteredMemes = this.currentMemes.filter(meme => {
             if (!searchTerm) return true;
             const searchableText = `${meme.title} ${meme.source}`.toLowerCase();
@@ -179,20 +183,34 @@ class MemeSearchApp {
         card.className = 'meme-card';
         card.addEventListener('click', () => this.openModal(meme));
 
-        card.innerHTML = `
-            <img src="${meme.url}" alt="${meme.title}" class="meme-image" loading="lazy">
-            <div class="meme-info">
-                <div class="meme-title">${this.escapeHtml(meme.title)}</div>
-                <div class="meme-source">Source: ${this.escapeHtml(meme.source)}</div>
-            </div>
-        `;
-
-        // Handle image load errors
-        const img = card.querySelector('.meme-image');
+        // Build the DOM imperatively rather than via innerHTML so that meme.url
+        // and other fields can't break out of the attribute context and inject
+        // markup. Assigning to .src treats the value strictly as a URL.
+        const img = document.createElement('img');
+        img.className = 'meme-image';
+        img.loading = 'lazy';
+        img.alt = meme.title;
+        img.src = meme.url;
         img.addEventListener('error', function() {
             this.src = 'https://via.placeholder.com/400/f5f5f5/999999?text=Image+Not+Available';
             this.alt = 'Image not available';
         });
+
+        const info = document.createElement('div');
+        info.className = 'meme-info';
+
+        const title = document.createElement('div');
+        title.className = 'meme-title';
+        title.textContent = meme.title;
+
+        const source = document.createElement('div');
+        source.className = 'meme-source';
+        source.textContent = `Source: ${meme.source}`;
+
+        info.appendChild(title);
+        info.appendChild(source);
+        card.appendChild(img);
+        card.appendChild(info);
 
         return card;
     }

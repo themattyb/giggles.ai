@@ -1,5 +1,7 @@
 # Binaries
-crawler
+# Anchored to the package root so it only ignores the compiled `crawler`
+# binary, NOT the internal/crawler/ source directory.
+/crawler
 *.exe
 *.exe~
 *.dll

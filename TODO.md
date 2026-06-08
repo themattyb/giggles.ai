@@ -3,14 +3,18 @@
 ## Security
 
 - [x] Enable TLS verification by default in crawler HTTP client (`crawler/internal/crawler/crawler.go:91-92`). Add an opt-in `--insecure` CLI flag for testing instead of hardcoding `InsecureSkipVerify: true`.
-- [ ] Cap response body reads with `io.LimitReader` to prevent memory exhaustion from oversized responses (`crawler/internal/crawler/crawler.go`). Suggested limits: ~50MB for images in `downloadImage`, ~1MB for `fetchRobotsTxt`.
-- [ ] Escape `meme.url` in `createMemeCard` (`gui/app.js:183`). Currently interpolated directly into `innerHTML` without escaping. Build the img element via `document.createElement` instead.
-- [ ] Restrict `LoadCredentialsFromFile` (`crawler/internal/s3/client.go:92-117`) to only set AWS-specific environment variables, or remove the function entirely in favor of the AWS SDK's built-in credential file support.
+- [x] Cap response body reads with `io.LimitReader` to prevent memory exhaustion from oversized responses (`crawler/internal/crawler/crawler.go`). Caps added: 50MB images (`downloadImage`), 10MB HTML (`processPage`), 1MB `fetchRobotsTxt`.
+- [x] Escape `meme.url` in `createMemeCard` (`gui/app.js`). Card is now built imperatively via `document.createElement` with `.src`/`.textContent`, so no field can break out of the attribute context.
+- [ ] Restrict `LoadCredentialsFromFile` (`crawler/internal/s3/client.go:92-117`) to only set AWS-specific environment variables, or remove the function entirely in favor of the AWS SDK's built-in credential file support. (Note: function is currently dead code — never called from `main.go`.)
 
 ## Bugs / Correctness
 
-- [ ] Fix TOCTOU race condition on visited-URL check (`crawler/internal/crawler/crawler.go:200-211`). The RLock check and Lock set are separate critical sections, allowing two workers to process the same URL. Use a single Lock section that checks and sets atomically.
-- [ ] Fix misleading S3 credential chain (`crawler/internal/s3/client.go:27-44`). `NewEnvCredentials()` doesn't fail at session creation, so the fallback session is dead code. Use the default credential chain instead.
+- [x] Fix TOCTOU race condition on visited-URL check (`crawler/internal/crawler/crawler.go`). Check and set now happen in a single `Lock` critical section.
+- [x] Fix misleading S3 credential chain (`crawler/internal/s3/client.go`). Now uses `session.NewSessionWithOptions` with `SharedConfigEnable` and the SDK default credential chain.
+- [x] Fix `isMemeImage` over-broad matching (`crawler/internal/crawler/crawler.go`). Keyword matching is now token-based against the URL path (not raw substrings), so `ai` no longer matches `contains.jpg`; duplicate `deep`/`learning` keywords removed; host excluded so the `.ai` TLD doesn't match every image.
+- [x] Fix sort dropping the active search filter (`gui/app.js`). The search term is now stored in `this.searchTerm`; changing the sort order re-applies it instead of resetting to all memes.
+- [x] Fix robots.txt rules being silently ignored (`crawler/internal/crawler/crawler.go`). `canCrawl` passed the full URL to `group.Test()`, which expects a request path, so `Disallow:` prefixes never matched. Now passes `parsedURL.Path` (+ query). Caught by `TestCanCrawl`.
+- [x] Fix `.gitignore` excluding source (`crawler/.gitignore`). The unanchored `crawler` pattern matched the `internal/crawler/` directory, so `crawler.go` had never been committed. Anchored to `/crawler` (binary only).
 
 ## Feature Gaps
 
@@ -22,23 +26,23 @@
 
 ### Crawler unit tests (`crawler/internal/crawler/`)
 
-- [ ] `isMemeImage`: returns true for keyword matches (`https://example.com/ai-meme.jpg`), meme domain matches (`https://imgur.com/photo.png`), and false for non-image extensions (`logo.svg`), URLs with no keywords (`https://example.com/photo.jpg`)
-- [ ] `isMemeImage` false positive: the keyword `ai` matches any URL containing those two letters (e.g. `https://example.com/contains.jpg` matches on "ai" in "cont**ai**ns") — test documents this behavior and a fix should tighten matching
-- [ ] `resolveURL`: resolves relative paths against a base URL, returns empty string for non-HTTP schemes (`mailto:`, `javascript:`), handles empty input
-- [ ] `generateFilename`: extracts filename from URL path, generates a timestamped fallback when URL has no filename, maps content-type to correct extension (png, gif, webp), sanitizes spaces and `%20`
-- [ ] `getUniqueFilePath`: returns original path when file doesn't exist, appends `_1`, `_2` etc. when file already exists
-- [ ] `extractDomain`: strips port numbers, returns empty string for unparseable URLs
-- [ ] `canCrawl`: respects a robots.txt that disallows the path, allows crawling when robots.txt returns 404, allows crawling when robots.txt has no matching rules
+- [x] `isMemeImage`: returns true for keyword matches (`https://example.com/ai-meme.jpg`), meme domain matches (`https://imgur.com/photo.png`), and false for non-image extensions (`logo.svg`), URLs with no keywords (`https://example.com/photo.jpg`)
+- [x] `isMemeImage` (regression test for the tightened matching): `https://example.com/contains.jpg` returns **false** (no bare-substring `ai` match), `https://example.com/ai-meme.jpg` returns true (token match), and an image on a `.ai` host with no keyword in the path returns false
+- [x] `resolveURL`: resolves relative paths against a base URL, returns empty string for non-HTTP schemes (`mailto:`, `javascript:`), handles empty input
+- [x] `generateFilename`: extracts filename from URL path, generates a timestamped fallback when URL has no filename, maps content-type to correct extension (png, gif, webp), sanitizes spaces and `%20`
+- [x] `getUniqueFilePath`: returns original path when file doesn't exist, appends `_1`, `_2` etc. when file already exists
+- [x] `extractDomain`: strips port numbers, returns empty string for unparseable URLs
+- [x] `canCrawl`: respects a robots.txt that disallows the path, allows crawling when robots.txt returns 404, allows crawling when robots.txt has no matching rules (`integration_test.go`)
 
 ### Deduplication unit tests (`crawler/`)
 
-- [ ] `CalculateHash`: two identical files produce the same SHA256 hash, two different files produce different hashes
-- [ ] `ProcessFiles`: removes the newer duplicate when two files have the same content, keeps all files when no duplicates exist, writes a valid `.hashdb.json` after processing
-- [ ] `LoadDatabase` / `SaveDatabase`: round-trips records through JSON correctly, `LoadDatabase` returns no error when the file doesn't exist yet
+- [x] `CalculateHash`: two identical files produce the same SHA256 hash, two different files produce different hashes
+- [x] `ProcessFiles`: removes the newer duplicate when two files have the same content, keeps all files when no duplicates exist, writes a valid `.hashdb.json` after processing
+- [x] `LoadDatabase` / `SaveDatabase`: round-trips records through JSON correctly, `LoadDatabase` returns no error when the file doesn't exist yet
 
 ### Crawler integration test
 
-- [ ] Stand up an `httptest.Server` serving a small HTML page with `<img>` and `<a>` tags, run the crawler against it with `InsecureSkipVerify: false`, and verify `Stats` fields (pages crawled, images found/downloaded) are correct
+- [x] Stand up an `httptest.Server` serving a small HTML page with `<img>` and `<a>` tags, run the crawler against it with `InsecureSkipVerify: false`, and verify `Stats` fields (pages crawled, images found/downloaded) are correct (`integration_test.go`)
 
 ### GUI tests (`gui/`)
 

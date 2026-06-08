@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
@@ -23,24 +22,18 @@ type Client struct {
 // Credentials are loaded from environment variables or AWS credentials file
 // AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN (optional)
 func NewClient(bucket, region string) (*Client, error) {
-	// Create AWS session
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(region),
-		// Credentials will be loaded from:
-		// 1. Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-		// 2. AWS credentials file (~/.aws/credentials)
-		// 3. IAM role (if running on EC2)
-		Credentials: credentials.NewEnvCredentials(),
+	// Create an AWS session using the SDK's default credential chain, which
+	// resolves credentials in order from:
+	//   1. Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
+	//   2. The shared credentials/config files (~/.aws/credentials, ~/.aws/config)
+	//   3. An IAM role (ECS task role, EC2 instance profile, etc.)
+	// SharedConfigEnable ensures profiles in the shared config file are honored.
+	sess, err := session.NewSessionWithOptions(session.Options{
+		Config:            aws.Config{Region: aws.String(region)},
+		SharedConfigState: session.SharedConfigEnable,
 	})
-
 	if err != nil {
-		// Fallback to default credentials chain
-		sess, err = session.NewSession(&aws.Config{
-			Region: aws.String(region),
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create AWS session: %w", err)
-		}
+		return nil, fmt.Errorf("failed to create AWS session: %w", err)
 	}
 
 	uploader := s3manager.NewUploader(sess)
@@ -87,8 +80,9 @@ func (c *Client) GetPublicURL(filename string) string {
 // LoadCredentialsFromFile loads credentials from a file (for local development)
 // Format: key=value pairs, one per line
 // Example:
-//   AWS_ACCESS_KEY_ID=your_key
-//   AWS_SECRET_ACCESS_KEY=your_secret
+//
+//	AWS_ACCESS_KEY_ID=your_key
+//	AWS_SECRET_ACCESS_KEY=your_secret
 func LoadCredentialsFromFile(filepath string) error {
 	data, err := os.ReadFile(filepath)
 	if err != nil {
@@ -115,4 +109,3 @@ func LoadCredentialsFromFile(filepath string) error {
 
 	return nil
 }
-
