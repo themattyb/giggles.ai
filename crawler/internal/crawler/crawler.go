@@ -66,6 +66,8 @@ type Crawler struct {
 	queueMu           sync.Mutex
 	discoveredDomains map[string]bool // Track discovered domains
 	domainsMu         sync.RWMutex
+	done              chan struct{} // Closed to signal a graceful stop
+	doneOnce          sync.Once
 }
 
 // New creates a new crawler instance
@@ -113,6 +115,7 @@ func New(config Config) (*Crawler, error) {
 		queue:             make(chan string, config.MaxPages*2),
 		startTime:         time.Now(),
 		discoveredDomains: make(map[string]bool),
+		done:              make(chan struct{}),
 	}
 
 	// Initialize discovered domains with start URLs
@@ -131,10 +134,9 @@ func New(config Config) (*Crawler, error) {
 func (c *Crawler) Run() (*Stats, error) {
 	// Add all start URLs to queue
 	for _, startURL := range c.config.StartURLs {
-		select {
-		case c.queue <- startURL:
+		if c.enqueue(startURL) {
 			log.Printf("Added start URL to queue: %s", startURL)
-		default:
+		} else {
 			log.Printf("Queue full, skipping URL: %s", startURL)
 		}
 	}
@@ -165,7 +167,13 @@ func (c *Crawler) coordinator() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
-	for range ticker.C {
+	for {
+		select {
+		case <-c.done:
+			return
+		case <-ticker.C:
+		}
+
 		c.statsMu.RLock()
 		pagesCrawled := c.stats.PagesCrawled
 		c.statsMu.RUnlock()
@@ -189,7 +197,8 @@ func (c *Crawler) coordinator() {
 	}
 }
 
-// closeQueue safely closes the queue
+// closeQueue safely closes the queue. It shares queueMu with enqueue so a
+// close can never race with an in-flight send (which would panic).
 func (c *Crawler) closeQueue() {
 	c.queueMu.Lock()
 	defer c.queueMu.Unlock()
@@ -199,11 +208,49 @@ func (c *Crawler) closeQueue() {
 	}
 }
 
+// enqueue adds a URL to the queue without blocking. Holding queueMu while
+// sending guarantees we never send on a queue that closeQueue has closed.
+// Returns false if the queue is closed or full.
+func (c *Crawler) enqueue(urlStr string) bool {
+	c.queueMu.Lock()
+	defer c.queueMu.Unlock()
+	if c.queueClosed {
+		return false
+	}
+	select {
+	case c.queue <- urlStr:
+		return true
+	default:
+		return false
+	}
+}
+
+// Stop signals the crawler to stop gracefully: workers finish their current
+// page, the queue is closed, and Run returns with the stats collected so far.
+// Safe to call multiple times and from any goroutine.
+func (c *Crawler) Stop() {
+	c.doneOnce.Do(func() {
+		close(c.done)
+		c.closeQueue()
+	})
+}
+
 // worker processes URLs from the queue
 func (c *Crawler) worker(id int) {
 	defer c.wg.Done()
 
-	for urlStr := range c.queue {
+	for {
+		var urlStr string
+		select {
+		case <-c.done:
+			return
+		case u, ok := <-c.queue:
+			if !ok {
+				return
+			}
+			urlStr = u
+		}
+
 		// Check if we've reached max pages
 		c.statsMu.RLock()
 		if c.stats.PagesCrawled >= c.config.MaxPages {
@@ -415,22 +462,15 @@ func (c *Crawler) processPage(urlStr string, workerID int) error {
 					parsedLink, err := url.Parse(link)
 					if err == nil {
 						rootURL := fmt.Sprintf("%s://%s/", parsedLink.Scheme, parsedLink.Host)
-						select {
-						case c.queue <- rootURL:
+						if c.enqueue(rootURL) {
 							log.Printf("[Worker %d] Added root URL of new domain to queue: %s", workerID, rootURL)
-						default:
-							// Queue is full, skip
 						}
 					}
 				}
 			}
 
 			// Add the link itself to the queue
-			select {
-			case c.queue <- link:
-			default:
-				// Queue is full, skip
-			}
+			c.enqueue(link)
 		}
 	}
 	c.statsMu.RUnlock()

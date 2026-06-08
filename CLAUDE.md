@@ -62,6 +62,8 @@ Coverage so far: unit tests for the pure crawler helpers (`isMemeImage`, `resolv
 - `internal/crawler/` — Core crawling logic: HTML parsing, robots.txt compliance, meme image detection heuristics, link extraction
 - `internal/s3/` — AWS S3 client wrapper for image uploads
 - A `coordinator()` goroutine feeds a channel-based task queue consumed by N `worker()` goroutines; `sync.RWMutex` guards the visited-URL set and `sync.WaitGroup` tracks completion
+- All queue sends go through `enqueue()`, which shares `queueMu` with `closeQueue()` so a close can never race an in-flight send (a closed channel panics rather than taking a `select` `default`). Do not send to `c.queue` directly
+- Graceful shutdown: `Stop()` closes a `done` channel that workers and the coordinator select on; `main.go` wires it to `SIGINT`/`SIGTERM` so stats still print on interrupt
 - Caches robots.txt per domain (`canCrawl` / `fetchRobotsTxt`)
 - `isMemeImage` decides what to download via filename-keyword + known-meme-domain heuristics — the central tuning point for crawl precision (its keyword matching has known false positives; see `TODO.md`)
 

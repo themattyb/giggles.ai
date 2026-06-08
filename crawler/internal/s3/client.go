@@ -3,7 +3,6 @@ package s3
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -75,37 +74,4 @@ func (c *Client) UploadImage(filename string, data []byte, contentType string) e
 func (c *Client) GetPublicURL(filename string) string {
 	filename = strings.TrimPrefix(filename, "/")
 	return fmt.Sprintf("https://%s.s3.%s.amazonaws.com/memes/%s", c.bucket, c.region, filename)
-}
-
-// LoadCredentialsFromFile loads credentials from a file (for local development)
-// Format: key=value pairs, one per line
-// Example:
-//
-//	AWS_ACCESS_KEY_ID=your_key
-//	AWS_SECRET_ACCESS_KEY=your_secret
-func LoadCredentialsFromFile(filepath string) error {
-	data, err := os.ReadFile(filepath)
-	if err != nil {
-		return fmt.Errorf("failed to read credentials file: %w", err)
-	}
-
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-
-		os.Setenv(key, value)
-	}
-
-	return nil
 }

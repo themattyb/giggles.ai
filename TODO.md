@@ -5,7 +5,7 @@
 - [x] Enable TLS verification by default in crawler HTTP client (`crawler/internal/crawler/crawler.go:91-92`). Add an opt-in `--insecure` CLI flag for testing instead of hardcoding `InsecureSkipVerify: true`.
 - [x] Cap response body reads with `io.LimitReader` to prevent memory exhaustion from oversized responses (`crawler/internal/crawler/crawler.go`). Caps added: 50MB images (`downloadImage`), 10MB HTML (`processPage`), 1MB `fetchRobotsTxt`.
 - [x] Escape `meme.url` in `createMemeCard` (`gui/app.js`). Card is now built imperatively via `document.createElement` with `.src`/`.textContent`, so no field can break out of the attribute context.
-- [ ] Restrict `LoadCredentialsFromFile` (`crawler/internal/s3/client.go:92-117`) to only set AWS-specific environment variables, or remove the function entirely in favor of the AWS SDK's built-in credential file support. (Note: function is currently dead code — never called from `main.go`.)
+- [x] Remove `LoadCredentialsFromFile` (`crawler/internal/s3/client.go`). It was dead code (never called) that called `os.Setenv` for arbitrary keys; the SDK default credential chain already reads `~/.aws/credentials`.
 
 ## Bugs / Correctness
 
@@ -15,11 +15,12 @@
 - [x] Fix sort dropping the active search filter (`gui/app.js`). The search term is now stored in `this.searchTerm`; changing the sort order re-applies it instead of resetting to all memes.
 - [x] Fix robots.txt rules being silently ignored (`crawler/internal/crawler/crawler.go`). `canCrawl` passed the full URL to `group.Test()`, which expects a request path, so `Disallow:` prefixes never matched. Now passes `parsedURL.Path` (+ query). Caught by `TestCanCrawl`.
 - [x] Fix `.gitignore` excluding source (`crawler/.gitignore`). The unanchored `crawler` pattern matched the `internal/crawler/` directory, so `crawler.go` had never been committed. Anchored to `/crawler` (binary only).
+- [x] Fix send-on-closed-channel panic (`crawler/internal/crawler/crawler.go`). The coordinator could `close(c.queue)` while a worker was executing `select { case c.queue <- link: default: }` in `processPage` — a closed channel panics instead of taking the `default`. Sends now go through `enqueue`, which shares `queueMu` with `closeQueue` so a close can never race an in-flight send. Covered by `TestStopIsGraceful` under `-race`.
 
 ## Feature Gaps
 
 - [ ] Add domain scoping to the crawler. Currently follows links to any domain (`crawler/internal/crawler/crawler.go:380-403`). Add an `--allowed-domains` or `--same-domain` flag to constrain crawling.
-- [ ] Handle OS signals (`SIGINT`/`SIGTERM`) for graceful shutdown so workers can drain and stats are printed on interrupt.
+- [x] Handle OS signals (`SIGINT`/`SIGTERM`) for graceful shutdown so workers can drain and stats are printed on interrupt. `main.go` installs a handler that calls `Crawler.Stop()`, which closes a `done` channel; workers and the coordinator select on it and exit cleanly, then `Run` returns and stats print as normal.
 - [ ] Connect the GUI to real data. The frontend uses 3 hardcoded placeholder memes (`gui/app.js:91-117`) with no backend API. Build an API layer or have the GUI read from S3 directly.
 
 ## Testing
