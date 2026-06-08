@@ -590,6 +590,25 @@ func (c *Crawler) resolveURL(urlStr string, baseURL *url.URL) string {
 	return resolved.String()
 }
 
+// isNonContentAsset reports whether a lowercased image URL is site furniture
+// (placeholders, menu/sprite art, favicons) rather than actual content. The
+// markers are intentionally unambiguous so real memes are never excluded.
+func isNonContentAsset(lower string) bool {
+	// Anything served from an /assets/ path is framework chrome, not content.
+	if strings.Contains(lower, "/assets/") {
+		return true
+	}
+	markers := []string{
+		"mega-menu", "thumbnail_missing", "sprite", "favicon", "placeholder",
+	}
+	for _, m := range markers {
+		if strings.Contains(lower, m) {
+			return true
+		}
+	}
+	return false
+}
+
 // isMemeImage checks if an image URL looks like it might be a meme
 // This is a simple heuristic - can be improved with ML or better filtering
 func (c *Crawler) isMemeImage(imgURL string) bool {
@@ -606,6 +625,16 @@ func (c *Crawler) isMemeImage(imgURL string) bool {
 	}
 
 	if !hasImageExt {
+		return false
+	}
+
+	// Reject obvious site chrome before any accept rule. Placeholder art, menu
+	// graphics and sprites otherwise sail through on a meme domain or because
+	// they happen to contain the "meme" token (e.g. mega-menu-meme-store.png).
+	// Kept deliberately narrow so it can't swallow real meme entries, which on
+	// the KnowYourMeme CDN live under /entries/icons/ -- note "icon" is NOT a
+	// marker here for that reason.
+	if isNonContentAsset(lower) {
 		return false
 	}
 

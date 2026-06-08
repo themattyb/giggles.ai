@@ -27,6 +27,15 @@ func TestIsMemeImage(t *testing.T) {
 		// Regression: ".ai" TLD must not match every image on the host.
 		{"ai tld in host only", "https://giggles.ai/photo.jpg", false},
 		{"ai tld but keyword in path", "https://giggles.ai/robot-meme.jpg", true},
+		// Site chrome must be rejected even though it sits on a meme domain or
+		// trips the "meme" keyword. These are the placeholders/menu art that
+		// flooded the output in a real crawl.
+		{"thumbnail placeholder on meme domain", "https://knowyourmeme.com/assets/thumbnail_missing.png", false},
+		{"mega-menu art with meme keyword", "https://a.kym-cdn.com/assets/mega-menu-meme-store.png", false},
+		{"sprite asset", "https://imgur.com/assets/sprite.png", false},
+		// Regression: real meme entries live under /entries/icons/ on the CDN and
+		// must still pass via the keyword path -- do not over-exclude on "icon".
+		{"real meme entry under entries/icons", "https://i.kym-cdn.com/entries/icons/newsfeed/000/049/912/ai_overview.jpg", true},
 	}
 
 	for _, tt := range tests {
