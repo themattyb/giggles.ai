@@ -80,6 +80,9 @@ The crawler uses AWS SDK's default credential chain, which checks in this order:
 - `-delay`: Delay between requests (default: 2s)
 - `-max-pages`: Maximum number of pages to crawl (default: 100)
 - `-user-agent`: User agent string (default: giggles-ai-crawler/1.0)
+- `-same-domain`: Only follow links on the same domain(s) as the start URLs (default: off — follows links anywhere)
+- `-allowed-domains`: Comma-separated allow-list of domains to crawl, e.g. `reddit.com,imgur.com` (empty = any domain)
+- `-insecure`: Skip TLS certificate verification — testing only (default: off)
 
 ### Examples
 
@@ -97,6 +100,13 @@ The crawler uses AWS SDK's default credential chain, which checks in this order:
 ./crawler -start-urls "https://www.boredpanda.com/ai-fails/,https://www.reddit.com/r/aifails" \
   -workers 5 \
   -max-pages 20
+```
+
+**Stay on the starting domains (don't wander the whole web):**
+```bash
+./crawler -start-urls "https://www.boredpanda.com/ai-fails/" \
+  -same-domain \
+  -max-pages 50
 ```
 
 ## How It Works

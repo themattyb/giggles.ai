@@ -19,7 +19,7 @@
 
 ## Feature Gaps
 
-- [ ] Add domain scoping to the crawler. Currently follows links to any domain (`crawler/internal/crawler/crawler.go:380-403`). Add an `--allowed-domains` or `--same-domain` flag to constrain crawling.
+- [x] Add domain scoping to the crawler. Added `-same-domain` (restrict to the start URLs' domains) and `-allowed-domains` (explicit comma-separated allow-list); discovered links are filtered via `isAllowedDomain` before enqueue. Empty list preserves the old "follow anywhere" behavior. Covered by `TestIsAllowedDomain` / `TestNewSameDomainBuildsAllowList`.
 - [x] Handle OS signals (`SIGINT`/`SIGTERM`) for graceful shutdown so workers can drain and stats are printed on interrupt. `main.go` installs a handler that calls `Crawler.Stop()`, which closes a `done` channel; workers and the coordinator select on it and exit cleanly, then `Run` returns and stats print as normal.
 - [ ] Connect the GUI to real data. The frontend uses 3 hardcoded placeholder memes (`gui/app.js:91-117`) with no backend API. Build an API layer or have the GUI read from S3 directly.
 

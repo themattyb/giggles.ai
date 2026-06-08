@@ -124,6 +124,43 @@ func TestGetUniqueFilePath(t *testing.T) {
 	}
 }
 
+func TestIsAllowedDomain(t *testing.T) {
+	// No allow-list -> everything is in scope.
+	open := &Crawler{allowedDomains: map[string]bool{}}
+	if !open.isAllowedDomain("https://anything.com/x.jpg") {
+		t.Error("expected all domains allowed when allow-list is empty")
+	}
+
+	// With an allow-list, only listed hosts are in scope (port is ignored).
+	scoped := &Crawler{allowedDomains: map[string]bool{"example.com": true}}
+	if !scoped.isAllowedDomain("https://example.com/x.jpg") {
+		t.Error("expected example.com to be allowed")
+	}
+	if !scoped.isAllowedDomain("https://example.com:8080/x.jpg") {
+		t.Error("expected example.com with port to be allowed")
+	}
+	if scoped.isAllowedDomain("https://other.com/x.jpg") {
+		t.Error("expected other.com to be rejected")
+	}
+}
+
+func TestNewSameDomainBuildsAllowList(t *testing.T) {
+	c, err := New(Config{
+		StartURLs:  []string{"https://example.com/start"},
+		SameDomain: true,
+		MaxPages:   1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !c.isAllowedDomain("https://example.com/a.jpg") {
+		t.Error("expected start-URL domain to be allowed under -same-domain")
+	}
+	if c.isAllowedDomain("https://evil.com/a.jpg") {
+		t.Error("expected a different domain to be rejected under -same-domain")
+	}
+}
+
 func TestExtractDomain(t *testing.T) {
 	c := &Crawler{}
 

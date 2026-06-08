@@ -27,7 +27,7 @@ cd crawler && go build -o crawler .
 go mod download
 ```
 
-TLS certificate verification is on by default; pass `-insecure` only for testing. `-start-urls` (comma-separated) supersedes the deprecated `-start-url`.
+TLS certificate verification is on by default; pass `-insecure` only for testing. `-start-urls` (comma-separated) supersedes the deprecated `-start-url`. By default the crawler follows links to **any** domain; constrain it with `-same-domain` (stay on the start URLs' domains) or `-allowed-domains "a.com,b.com"`.
 
 ### GUI (Static Frontend)
 

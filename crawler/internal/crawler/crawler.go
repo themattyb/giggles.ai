@@ -35,8 +35,10 @@ type Config struct {
 	StartURLs          []string // Multiple starting URLs
 	UserAgent          string
 	S3Client           *s3.Client
-	LocalDir           string // Local directory to save images
-	InsecureSkipVerify bool   // Skip TLS certificate verification (use only for testing)
+	LocalDir           string   // Local directory to save images
+	InsecureSkipVerify bool     // Skip TLS certificate verification (use only for testing)
+	AllowedDomains     []string // If non-empty, only crawl links whose host is in this list
+	SameDomain         bool     // If true, restrict crawling to the domains of the start URLs
 }
 
 // Stats holds crawler statistics
@@ -68,6 +70,7 @@ type Crawler struct {
 	domainsMu         sync.RWMutex
 	done              chan struct{} // Closed to signal a graceful stop
 	doneOnce          sync.Once
+	allowedDomains    map[string]bool // If non-empty, crawling is restricted to these hosts
 }
 
 // New creates a new crawler instance
@@ -116,6 +119,7 @@ func New(config Config) (*Crawler, error) {
 		startTime:         time.Now(),
 		discoveredDomains: make(map[string]bool),
 		done:              make(chan struct{}),
+		allowedDomains:    make(map[string]bool),
 	}
 
 	// Initialize discovered domains with start URLs
@@ -127,7 +131,31 @@ func New(config Config) (*Crawler, error) {
 		}
 	}
 
+	// Build the allow-list for domain scoping. An empty list means "no
+	// restriction" (the historical behavior of following links anywhere).
+	for _, d := range config.AllowedDomains {
+		if d = strings.TrimSpace(d); d != "" {
+			c.allowedDomains[d] = true
+		}
+	}
+	if config.SameDomain {
+		for _, startURL := range config.StartURLs {
+			if domain := c.extractDomain(startURL); domain != "" {
+				c.allowedDomains[domain] = true
+			}
+		}
+	}
+
 	return c, nil
+}
+
+// isAllowedDomain reports whether urlStr is in scope for crawling. With no
+// configured allow-list, every domain is permitted.
+func (c *Crawler) isAllowedDomain(urlStr string) bool {
+	if len(c.allowedDomains) == 0 {
+		return true
+	}
+	return c.allowedDomains[c.extractDomain(urlStr)]
 }
 
 // Run starts the crawler
@@ -458,19 +486,23 @@ func (c *Crawler) processPage(urlStr string, workerID int) error {
 
 					log.Printf("[Worker %d] Discovered new domain: %s (from: %s)", workerID, domain, link)
 
-					// Add the root URL of the new domain to the queue
+					// Add the root URL of the new domain to the queue (only if it
+					// is in scope; with domain scoping on, off-scope domains are
+					// skipped entirely).
 					parsedLink, err := url.Parse(link)
 					if err == nil {
 						rootURL := fmt.Sprintf("%s://%s/", parsedLink.Scheme, parsedLink.Host)
-						if c.enqueue(rootURL) {
+						if c.isAllowedDomain(rootURL) && c.enqueue(rootURL) {
 							log.Printf("[Worker %d] Added root URL of new domain to queue: %s", workerID, rootURL)
 						}
 					}
 				}
 			}
 
-			// Add the link itself to the queue
-			c.enqueue(link)
+			// Add the link itself to the queue if it is in scope.
+			if c.isAllowedDomain(link) {
+				c.enqueue(link)
+			}
 		}
 	}
 	c.statsMu.RUnlock()
