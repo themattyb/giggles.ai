@@ -204,6 +204,15 @@ func (d *Deduplicator) ProcessFiles() error {
 		record := newRecord[0]
 
 		if existingRecord, exists := existingHashMap[hash]; exists {
+			// A file is never a duplicate of itself. When the database already
+			// records this exact file (same name, same hash), re-running dedupe
+			// must be a no-op — otherwise equal modtimes fall through the
+			// tie-break below and the file deletes itself. This kept dedupe from
+			// being idempotent and caused real data loss on a second run.
+			if existingRecord.Filename == record.Filename {
+				existingHashMap[hash] = record
+				continue
+			}
 			// Duplicate found with existing file
 			// Keep the one with older modification time
 			if record.FileModTime.Before(existingRecord.FileModTime) {

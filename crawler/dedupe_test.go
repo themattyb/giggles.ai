@@ -109,6 +109,44 @@ func TestProcessFilesRemovesNewerDuplicate(t *testing.T) {
 	}
 }
 
+func TestProcessFilesIsIdempotent(t *testing.T) {
+	dir := t.TempDir()
+
+	// Three distinct files, each with a unique hash. None are duplicates.
+	writeFile(t, dir, "ai-fails-1.jpg", "unique content one", time.Now().Add(-3*time.Hour))
+	writeFile(t, dir, "ai-fails-2.jpg", "unique content two", time.Now().Add(-2*time.Hour))
+	writeFile(t, dir, "ai-fails-3.jpg", "unique content three", time.Now().Add(-1*time.Hour))
+
+	// First run records all three in the database; nothing should be removed.
+	first := NewDeduplicator(dir)
+	if err := first.LoadDatabase(); err != nil {
+		t.Fatal(err)
+	}
+	if err := first.ProcessFiles(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Second run loads the database written by the first run. Because every
+	// file's hash is already recorded, the buggy modtime tie-break deletes
+	// each file as a "duplicate" of itself. A correct dedupe leaves them alone.
+	second := NewDeduplicator(dir)
+	if err := second.LoadDatabase(); err != nil {
+		t.Fatal(err)
+	}
+	if err := second.ProcessFiles(); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, name := range []string{"ai-fails-1.jpg", "ai-fails-2.jpg", "ai-fails-3.jpg"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+			t.Errorf("a second dedupe run must not delete unique file %s: %v", name, err)
+		}
+	}
+	if len(second.database.Records) != 3 {
+		t.Errorf("expected 3 unique records after re-run, got %d", len(second.database.Records))
+	}
+}
+
 func TestProcessFilesNoDuplicates(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "a.jpg", "content a", time.Time{})
