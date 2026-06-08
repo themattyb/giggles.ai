@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -111,6 +112,70 @@ func TestCrawlerIntegration(t *testing.T) {
 	}
 	if len(entries) == 0 {
 		t.Error("expected at least one file written to the local directory")
+	}
+}
+
+func TestCrawlerDownloadsEachImageOnce(t *testing.T) {
+	const imageBody = "\xff\xd8\xff\xe0fake-jpeg-bytes"
+
+	var fetches int64
+	mux := http.NewServeMux()
+	mux.HandleFunc("/robots.txt", http.NotFound)
+	mux.HandleFunc("/ai-meme.jpg", func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt64(&fetches, 1)
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.Write([]byte(imageBody))
+	})
+	// Two distinct pages that both reference the same image URL.
+	mux.HandleFunc("/page2.html", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><body><img src="/ai-meme.jpg"></body></html>`))
+	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><body><img src="/ai-meme.jpg"><a href="/page2.html">next</a></body></html>`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	dir := t.TempDir()
+	c, err := New(Config{
+		Workers:   1,
+		Delay:     0,
+		MaxPages:  5,
+		StartURLs: []string{srv.URL + "/"},
+		UserAgent: "test-agent",
+		LocalDir:  dir,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stats, err := c.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// The image is linked from two pages but its bytes must be fetched and
+	// saved only once -- re-downloading the same URL wastes bandwidth and
+	// litters the output with _1, _2, ... copies of identical content.
+	if got := atomic.LoadInt64(&fetches); got != 1 {
+		t.Errorf("expected image URL to be fetched once, was fetched %d times", got)
+	}
+	if stats.ImagesDownloaded != 1 {
+		t.Errorf("expected ImagesDownloaded == 1, got %d", stats.ImagesDownloaded)
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 {
+		var names []string
+		for _, e := range entries {
+			names = append(names, e.Name())
+		}
+		t.Errorf("expected exactly 1 file written, got %d: %v", len(entries), names)
 	}
 }
 

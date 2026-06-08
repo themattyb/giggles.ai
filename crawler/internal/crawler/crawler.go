@@ -57,6 +57,8 @@ type Crawler struct {
 	client            *http.Client
 	visited           map[string]bool
 	visitedMu         sync.RWMutex
+	seenImages        map[string]bool // Image URLs already downloaded, to avoid refetching
+	seenImagesMu      sync.Mutex
 	robotsCache       map[string]*robotstxt.RobotsData
 	robotsMu          sync.RWMutex
 	queue             chan string
@@ -114,6 +116,7 @@ func New(config Config) (*Crawler, error) {
 			Transport: transport,
 		},
 		visited:           make(map[string]bool),
+		seenImages:        make(map[string]bool),
 		robotsCache:       make(map[string]*robotstxt.RobotsData),
 		queue:             make(chan string, config.MaxPages*2),
 		startTime:         time.Now(),
@@ -462,7 +465,7 @@ func (c *Crawler) processPage(urlStr string, workerID int) error {
 		c.stats.ImagesFound++
 		c.statsMu.Unlock()
 
-		if c.isMemeImage(imgURL) {
+		if c.isMemeImage(imgURL) && c.markImageSeen(imgURL) {
 			c.downloadImage(imgURL, workerID)
 		}
 	}
@@ -643,6 +646,21 @@ func (c *Crawler) isMemeImage(imgURL string) bool {
 	}
 
 	return false
+}
+
+// markImageSeen records imgURL as handled and reports whether this is the
+// first time it has been seen. The same image URL is commonly referenced from
+// many pages (site logos, mega-menu art, "thumbnail missing" placeholders);
+// without this gate the crawler refetches identical bytes and writes them as
+// _1, _2, ... copies.
+func (c *Crawler) markImageSeen(imgURL string) bool {
+	c.seenImagesMu.Lock()
+	defer c.seenImagesMu.Unlock()
+	if c.seenImages[imgURL] {
+		return false
+	}
+	c.seenImages[imgURL] = true
+	return true
 }
 
 // downloadImage downloads an image and optionally uploads to S3
