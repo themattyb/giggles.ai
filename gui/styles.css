@@ -198,6 +198,13 @@ body {
     display: block;
 }
 
+.meme-image-missing {
+    display: grid;
+    place-items: center;
+    background: #f5f5f5;
+    color: #999999;
+}
+
 .meme-info {
     padding: 15px;
 }

@@ -185,10 +185,15 @@ class MemeSearchApp {
         img.loading = 'lazy';
         img.alt = meme.title;
         img.src = meme.url;
-        img.addEventListener('error', function () {
-            this.src = 'https://via.placeholder.com/400/f5f5f5/999999?text=Image+Not+Available';
-            this.alt = 'Image not available';
-        });
+        // Swap in a same-origin placeholder rather than another image URL: a
+        // third-party fallback is blocked by a strict CSP (img-src 'self'), and
+        // each blocked load re-fires 'error', looping.
+        img.addEventListener('error', () => {
+            const missing = document.createElement('div');
+            missing.className = 'meme-image meme-image-missing';
+            missing.textContent = 'Image not available';
+            img.replaceWith(missing);
+        }, { once: true });
 
         const info = document.createElement('div');
         info.className = 'meme-info';

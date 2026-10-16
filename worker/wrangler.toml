@@ -1,0 +1,8 @@
+# giggles.cloudburstlabs.workers.dev: redirect-only. All content lives behind
+# the cloudburstlabs portal's sign-in at /giggles/ (docs/WORKER-HOSTING.md §7).
+# Deploy: cd worker && ../../cloudburstlabs/node_modules/.bin/wrangler deploy
+name = "giggles"
+account_id = "45d0740fd203828ed967d25195341b87"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
