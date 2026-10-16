@@ -12,13 +12,22 @@ import {
     getPaginationInfo,
 } from './memeLogic.js';
 
-// Where to load memes from. Override by setting window.GIGGLES_MANIFEST_URL
-// before this script runs (e.g. to point at an S3 URL).
-const MANIFEST_URL = window.GIGGLES_MANIFEST_URL || './memes.json';
+// Where to load memes from.
+//
+// Precedence:
+//   1. window.GIGGLES_MANIFEST_URL — explicit override (e.g. an S3 URL). When
+//      set, ONLY this URL is used; no fallback.
+//   2. ./memes.local.json — the crawler-generated manifest (gitignored). Present
+//      when you've actually crawled images locally; preferred so you see them.
+//   3. ./memes.json — the committed, portable sample manifest, so a fresh
+//      checkout still renders something even before any crawl has run.
+const MANIFEST_URLS = window.GIGGLES_MANIFEST_URL
+    ? [window.GIGGLES_MANIFEST_URL]
+    : ['./memes.local.json', './memes.json'];
 
 class MemeSearchApp {
-    constructor(manifestUrl = MANIFEST_URL) {
-        this.manifestUrl = manifestUrl;
+    constructor(manifestUrls = MANIFEST_URLS) {
+        this.manifestUrls = Array.isArray(manifestUrls) ? manifestUrls : [manifestUrls];
         this.currentPage = 1;
         this.itemsPerPage = 12;
         this.currentMemes = [];
@@ -85,15 +94,30 @@ class MemeSearchApp {
         });
     }
 
+    // Try each candidate manifest URL in order, returning the parsed JSON of the
+    // first one that loads. A missing (e.g. 404) or invalid manifest falls
+    // through to the next candidate; only when all fail do we throw.
+    async fetchManifest() {
+        const errors = [];
+        for (const url of this.manifestUrls) {
+            try {
+                const response = await fetch(url, { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                errors.push(`${url} (${error.message})`);
+            }
+        }
+        throw new Error(`No manifest could be loaded. Tried: ${errors.join(', ')}`);
+    }
+
     async loadInitialMemes() {
         this.showLoading();
 
         try {
-            const response = await fetch(this.manifestUrl, { cache: 'no-cache' });
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status} fetching ${this.manifestUrl}`);
-            }
-            const data = await response.json();
+            const data = await this.fetchManifest();
             this.currentMemes = parseManifest(data);
 
             if (this.currentMemes.length === 0) {
@@ -105,8 +129,8 @@ class MemeSearchApp {
             this.filteredMemes = [];
             this.renderMemes();
             this.showError(
-                `Could not load memes from ${this.manifestUrl}. ` +
-                `Make sure a memes.json manifest is served here (see docs/GUI.md).`
+                'Could not load memes. ' +
+                'Make sure a memes.json manifest is served here (see docs/GUI.md).'
             );
             console.error('Error loading memes:', error);
         } finally {

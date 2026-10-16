@@ -34,4 +34,14 @@ Thumbs.db
 node_modules/
 npm-debug.log*
 
+# Crawler-generated GUI manifest (local artifact). The committed gui/memes.json
+# is portable sample data; the real manifest is generated per-machine by
+# scripts/crawl.sh / `crawler -gen-manifest` and must not be committed.
+gui/memes.local.json
 
+
+# oh-my-claudecode runtime state (per-session, per-machine). .omc/skills/ is
+# the intentional committable exception.
+/.omc/*
+!/.omc/skills/
+/*/**/.omc/

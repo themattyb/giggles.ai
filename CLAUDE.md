@@ -68,9 +68,10 @@ Coverage so far: unit tests for the pure crawler helpers (`isMemeImage`, `resolv
 - `isMemeImage` decides what to download via filename-keyword + known-meme-domain heuristics — the central tuning point for crawl precision (its keyword matching has known false positives; see `TODO.md`)
 
 **GUI** (`gui/`) — Vanilla HTML/CSS/JS, no framework:
-- `app.js` — `MemeSearchApp` class (ES module): DOM wiring + fetches a `memes.json` manifest (override via `window.GIGGLES_MANIFEST_URL`). Loaded with `<script type="module">`
+- `app.js` — `MemeSearchApp` class (ES module): DOM wiring + fetches the meme manifest. Manifest precedence: `window.GIGGLES_MANIFEST_URL` (explicit override, no fallback) → `memes.local.json` (generated, gitignored) → `memes.json` (committed sample). Loaded with `<script type="module">`
 - `memeLogic.js` — pure, DOM-free filter/sort/paginate/escape helpers, unit-tested in `memeLogic.test.js` via Node's built-in runner (`cd gui && npm test`)
-- The crawler generates the manifest: `go run . -gen-manifest -manifest-dir found-images -manifest-out ../gui/memes.json` (see `manifest.go`)
+- **Two manifests by design**: `gui/memes.json` is committed *portable sample data* (live `placehold.co` images, no serving-layout assumptions) so a fresh checkout renders. `gui/memes.local.json` is the *real, generated* manifest (gitignored — its URLs are tied to the serving layout). The GUI prefers the local one when present.
+- **Crawl + index in one step**: `scripts/crawl.sh -start-urls "..." [crawler flags]` crawls, then regenerates `gui/memes.local.json`. These are otherwise separate operations — running only the crawler leaves the GUI stale. To regenerate the index alone: `go run . -gen-manifest -manifest-dir found-images -manifest-out ../gui/memes.local.json -manifest-base-url /crawler/found-images` (see `manifest.go`). `-manifest-base-url` must match where images are served — `/crawler/found-images` is correct when serving the repo root.
 - `index.html` / `styles.css` — Responsive search interface with CSS custom properties for theming
 
 **Landing Page** (root) — `index.html` + `style.css`, separate from the GUI
